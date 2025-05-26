@@ -232,6 +232,19 @@ function App() {
     }
   }
 
+  const handleDeleteHistory = (itemId) => {
+    setHistory(prevHistory => {
+      const newHistory = prevHistory.filter(item => item.id !== itemId)
+      return newHistory
+    })
+    
+    // If the deleted item was selected, clear the selection
+    if (selectedHistoryId === itemId) {
+      setSelectedHistoryId(null)
+      setMarkdown('')
+    }
+  }
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen)
   }
@@ -271,6 +284,7 @@ function App() {
           onSelectHistory={handleSelectHistory}
           selectedHistoryId={selectedHistoryId}
           onClearHistory={handleClearHistory}
+          onDeleteHistory={handleDeleteHistory}
         />
       )}
       
@@ -288,95 +302,103 @@ function App() {
           <div className="app-title">
             <h1>PDF to Markdown Converter</h1>
           </div>
+          <button 
+            className="file-select-btn"
+            onClick={() => !isLoading && fileInputRef.current?.click()}
+            disabled={isLoading}
+            title="Select PDF file"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+            Select File
+          </button>
         </div>
 
-        <div className="container">
+        <div 
+          className={`container universal-drop-zone ${isDragging ? 'dragging' : ''} ${isLoading ? 'loading' : ''}`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+        >
+          <input 
+            type="file" 
+            ref={fileInputRef}
+            onChange={handleFileInput}
+            accept=".pdf"
+            style={{ display: 'none' }}
+            disabled={isLoading}
+          />
+          
           <div className="app-wrapper">
-            <div className="header">
-              <p>Drop your PDF file below to convert it to Markdown format</p>
-            </div>
-
-            <div 
-              className={`drop-zone ${isDragging ? 'dragging' : ''} ${isLoading ? 'loading' : ''}`}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onClick={() => !isLoading && fileInputRef.current?.click()}
-            >
-              <input 
-                type="file" 
-                ref={fileInputRef}
-                onChange={handleFileInput}
-                accept=".pdf"
-                style={{ display: 'none' }}
-                disabled={isLoading}
-              />
-              
-              {isLoading ? (
-                <div className="loading-content">
-                  <div className="loading-visual">
-                    <div className="progress-ring">
-                      <svg className="progress-circle" viewBox="0 0 120 120">
-                        <circle
-                          className="progress-circle-bg"
-                          cx="60"
-                          cy="60"
-                          r="50"
-                          fill="none"
-                          stroke="rgba(59, 130, 246, 0.1)"
-                          strokeWidth="8"
-                        />
-                        <circle
-                          className="progress-circle-fill"
-                          cx="60"
-                          cy="60"
-                          r="50"
-                          fill="none"
-                          stroke="#3b82f6"
-                          strokeWidth="8"
-                          strokeLinecap="round"
-                          strokeDasharray={`${2 * Math.PI * 50}`}
-                          strokeDashoffset={`${2 * Math.PI * 50 * (1 - loadingProgress / 100)}`}
-                          transform="rotate(-90 60 60)"
-                        />
-                      </svg>
-                      <div className="progress-percentage">{loadingProgress}%</div>
-                    </div>
-                  </div>
-                  <div className="loading-text">
-                    <p>{loadingStage}</p>
-                    {currentFile && (
-                      <div className="file-info">
-                        <span className="filename">📄 {currentFile.name}</span>
-                        <span className="file-size">
-                          {(currentFile.size / (1024 * 1024)).toFixed(1)} MB
-                        </span>
-                        {totalPages > 0 && (
-                          <span className="page-info">
-                            {currentPage > 0 ? `Page ${currentPage} of ${totalPages}` : `${totalPages} pages total`}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    <div className="progress-bar">
-                      <div 
-                        className="progress-fill" 
-                        style={{ width: `${loadingProgress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <>
+            {!markdown && !isLoading && (
+              <div className="welcome-content">
+                <div className="welcome-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                   </svg>
-                  <p>Drop your PDF here</p>
-                  <span className="sub-text">or click to select a file</span>
-                </>
-              )}
-            </div>
+                </div>
+                <h2>Drop your PDF anywhere to convert</h2>
+                <p>Drag and drop a PDF file anywhere on this page, or use the "Select File" button in the top right corner</p>
+              </div>
+            )}
+
+            {isLoading && (
+              <div className="loading-content">
+                <div className="loading-visual">
+                  <div className="progress-ring">
+                    <svg className="progress-circle" viewBox="0 0 120 120">
+                      <circle
+                        className="progress-circle-bg"
+                        cx="60"
+                        cy="60"
+                        r="50"
+                        fill="none"
+                        stroke="rgba(59, 130, 246, 0.1)"
+                        strokeWidth="8"
+                      />
+                      <circle
+                        className="progress-circle-fill"
+                        cx="60"
+                        cy="60"
+                        r="50"
+                        fill="none"
+                        stroke="#3b82f6"
+                        strokeWidth="8"
+                        strokeLinecap="round"
+                        strokeDasharray={`${2 * Math.PI * 50}`}
+                        strokeDashoffset={`${2 * Math.PI * 50 * (1 - loadingProgress / 100)}`}
+                        transform="rotate(-90 60 60)"
+                      />
+                    </svg>
+                    <div className="progress-percentage">{loadingProgress}%</div>
+                  </div>
+                </div>
+                <div className="loading-text">
+                  <p>{loadingStage}</p>
+                  {currentFile && (
+                    <div className="file-info">
+                      <span className="filename">📄 {currentFile.name}</span>
+                      <span className="file-size">
+                        {(currentFile.size / (1024 * 1024)).toFixed(1)} MB
+                      </span>
+                      {totalPages > 0 && (
+                        <span className="page-info">
+                          {currentPage > 0 ? `Page ${currentPage} of ${totalPages}` : `${totalPages} pages total`}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill" 
+                      style={{ width: `${loadingProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {markdown && !isLoading && (
               <div className="markdown-container">

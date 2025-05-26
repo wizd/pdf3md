@@ -224,6 +224,15 @@
   align-items: flex-start;
   gap: 12px;
   margin-bottom: 8px;
+  position: relative;
+}
+
+.file-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .file-icon {
@@ -246,6 +255,35 @@
 .file-info {
   flex: 1;
   min-width: 0;
+}
+
+.delete-item-btn {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transform: scale(1);
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.delete-item-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  transform: scale(1.05);
+}
+
+.delete-item-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 .filename {
