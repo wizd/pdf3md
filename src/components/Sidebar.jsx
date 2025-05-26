@@ -6,16 +6,23 @@ const Sidebar = ({ history, onSelectHistory, selectedHistoryId, onClearHistory }
   const [filteredHistory, setFilteredHistory] = useState(history)
 
   useEffect(() => {
+    console.log('[Sidebar] useEffect for search triggered. SearchTerm:', searchTerm);
+    console.log('[Sidebar] History prop:', history);
+
     if (!searchTerm) {
-      setFilteredHistory(history)
+      console.log('[Sidebar] No search term, setting filteredHistory to full history.');
+      setFilteredHistory(history);
     } else {
-      const filtered = history.filter(item =>
-        item.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.markdown.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      setFilteredHistory(filtered)
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      const filtered = history.filter(item => {
+        const foundInFilename = item.filename && item.filename.toLowerCase().includes(lowerSearchTerm);
+        const foundInMarkdown = item.markdown && item.markdown.toLowerCase().includes(lowerSearchTerm);
+        return foundInFilename || foundInMarkdown;
+      });
+      console.log('[Sidebar] Filtered history based on search:', filtered);
+      setFilteredHistory(filtered);
     }
-  }, [searchTerm, history])
+  }, [searchTerm, history]);
 
   const formatRelativeTime = (timestamp) => {
     const now = new Date()

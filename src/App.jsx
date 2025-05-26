@@ -18,24 +18,50 @@ function App() {
   const [totalPages, setTotalPages] = useState(0)
   const [currentPage, setCurrentPage] = useState(0)
   const fileInputRef = useRef(null)
+  const isInitialMount = useRef(true); // Ref to track initial mount
 
   // Load history from localStorage on component mount
   useEffect(() => {
-    const savedHistory = localStorage.getItem('pdf2md-history')
+    const savedHistory = localStorage.getItem('pdf2md-history');
+    console.log('Loading history from localStorage:', savedHistory);
     if (savedHistory) {
       try {
-        const parsedHistory = JSON.parse(savedHistory)
-        setHistory(parsedHistory)
+        const parsedHistory = JSON.parse(savedHistory);
+        console.log('Parsed history:', parsedHistory);
+        if (Array.isArray(parsedHistory)) {
+          setHistory(parsedHistory);
+        } else {
+          console.error('Loaded history is not an array. Resetting history.');
+          setHistory([]);
+        }
       } catch (error) {
-        console.error('Error loading history:', error)
+        console.error('Error parsing history from localStorage. Resetting history:', error);
+        setHistory([]);
       }
+    } else {
+      console.log('No history found in localStorage.');
     }
-  }, [])
+  }, []);
 
   // Save history to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('pdf2md-history', JSON.stringify(history))
-  }, [history])
+    if (isInitialMount.current) {
+      isInitialMount.current = false; // Set to false after first run, so subsequent runs will save
+      // Optionally, if history is already populated by the load effect synchronously
+      // AND the load effect runs before this save effect on mount,
+      // you might not even need to log here or could log differently.
+      // However, the primary goal is to prevent saving the initial empty `history` state.
+      console.log('Skipping initial save of history to localStorage.');
+      return;
+    }
+    try {
+      const historyToSave = JSON.stringify(history);
+      console.log('Saving history to localStorage (actual save):', historyToSave);
+      localStorage.setItem('pdf2md-history', historyToSave);
+    } catch (error) {
+      console.error('Error saving history to localStorage:', error);
+    }
+  }, [history]);
 
   const addToHistory = (conversionData) => {
     const historyItem = {
@@ -188,9 +214,15 @@ function App() {
   }
 
   const handleSelectHistory = (historyItem) => {
-    setMarkdown(historyItem.markdown)
-    setSelectedHistoryId(historyItem.id)
-  }
+    setMarkdown(historyItem.markdown);
+    setSelectedHistoryId(historyItem.id);
+    setCurrentFile(null); // Clear current file info
+    setIsLoading(false);  // Ensure loading indicators are off
+    setLoadingProgress(0); // Reset progress display
+    setLoadingStage('');
+    setTotalPages(0);
+    setCurrentPage(0);
+  };
 
   const handleClearHistory = () => {
     if (window.confirm('Are you sure you want to clear all conversion history? This action cannot be undone.')) {
@@ -284,7 +316,6 @@ function App() {
               {isLoading ? (
                 <div className="loading-content">
                   <div className="loading-visual">
-                    <div className="loading-spinner"></div>
                     <div className="progress-ring">
                       <svg className="progress-circle" viewBox="0 0 120 120">
                         <circle

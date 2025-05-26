@@ -14,15 +14,6 @@
   justify-content: center;
 }
 
-.loading-spinner {
-  width: 80px;
-  height: 80px;
-  border: 3px solid rgba(59, 130, 246, 0.2);
-  border-top: 3px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1.5s linear infinite;
-  position: absolute;
-}
 
 .progress-ring {
   position: relative;
@@ -205,10 +196,6 @@
     height: 100px;
   }
 
-  .loading-spinner {
-    width: 60px;
-    height: 60px;
-  }
 
   .progress-percentage {
     font-size: 1rem;
@@ -234,10 +221,6 @@
     height: 80px;
   }
 
-  .loading-spinner {
-    width: 50px;
-    height: 50px;
-  }
 
   .progress-percentage {
     font-size: 0.9rem;
