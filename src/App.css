@@ -1,0 +1,209 @@
+/* App.css */
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e6eeff 100%);
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+@media (min-width: 1200px) {
+  .container {
+    max-width: 80%;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 20px;
+  }
+}
+
+.app-wrapper {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  margin-top: 40px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.header h1 {
+  color: #2563eb;
+  margin-bottom: 10px;
+  font-size: 2.5rem;
+}
+
+.header p {
+  color: #64748b;
+  font-size: 1.1rem;
+}
+
+.drop-zone {
+  border: 2px dashed #94a3b8;
+  background-color: rgba(241, 245, 249, 0.5);
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  position: relative;
+}
+
+.drop-zone:hover {
+  border-color: #2563eb;
+  background-color: rgba(241, 245, 249, 0.8);
+}
+
+.drop-zone input[type="file"] {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.drop-zone svg {
+  width: 48px;
+  height: 48px;
+  color: #64748b;
+}
+
+.drop-zone p {
+  font-size: 1.1rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.drop-zone .sub-text {
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+
+.markdown-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  overflow: hidden;
+}
+
+.markdown-header {
+  background-color: #f8fafc;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.markdown-header h3 {
+  margin: 0;
+  color: #334155;
+  font-size: 1.1rem;
+}
+
+.copy-button {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.copy-button:hover {
+  background-color: #1d4ed8;
+}
+
+.copy-button.copied {
+  background-color: #16a34a;
+}
+
+.copy-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.markdown-content {
+  padding: 20px;
+  background-color: white;
+  border-radius: 0 0 12px 12px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  color: #334155;
+  font-family: ui-monospace, monospace;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.loading {
+  text-align: center;
+  color: #64748b;
+  padding: 20px;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  }
+
+  .app-wrapper {
+    background: rgba(30, 41, 59, 0.95);
+  }
+  
+  .markdown-container {
+    background: #1e293b;
+  }
+  
+  .markdown-header {
+    background-color: #0f172a;
+    border-bottom-color: #334155;
+  }
+  
+  .markdown-header h3 {
+    color: #e2e8f0;
+  }
+  
+  .markdown-content {
+    background-color: #1e293b;
+  }
+  
+  pre {
+    color: #e2e8f0;
+  }
+  
+  .drop-zone {
+    background-color: rgba(15, 23, 42, 0.5);
+  }
+}
