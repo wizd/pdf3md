@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './Sidebar.css'
 
-const Sidebar = ({ history, onSelectHistory, selectedHistoryId, onClearHistory, onDeleteHistory }) => {
+const Sidebar = ({ isOpen, history, onSelectHistory, selectedHistoryId, onClearHistory, onDeleteHistory, onClose }) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredHistory, setFilteredHistory] = useState(history)
 
@@ -132,10 +132,19 @@ const Sidebar = ({ history, onSelectHistory, selectedHistoryId, onClearHistory, 
   }
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
         <h2>History</h2>
         <div className="sidebar-actions">
+          <button 
+            className="mobile-close-btn"
+            onClick={onClose}
+            title="Close sidebar"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
           <button 
             className="clear-history-btn"
             onClick={onClearHistory}

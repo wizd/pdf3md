@@ -11,14 +11,27 @@ function App() {
   const [isCopied, setIsCopied] = useState(false)
   const [history, setHistory] = useState([])
   const [selectedHistoryId, setSelectedHistoryId] = useState(null)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(true) // Start open on desktop, will be handled by mobile detection
   const [currentFile, setCurrentFile] = useState(null)
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [loadingStage, setLoadingStage] = useState('')
   const [totalPages, setTotalPages] = useState(0)
   const [currentPage, setCurrentPage] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
   const fileInputRef = useRef(null)
   const isInitialMount = useRef(true); // Ref to track initial mount
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Load history from localStorage on component mount
   useEffect(() => {
@@ -222,6 +235,11 @@ function App() {
     setLoadingStage('');
     setTotalPages(0);
     setCurrentPage(0);
+    
+    // Close sidebar on mobile after selecting an item
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
   };
 
   const handleClearHistory = () => {
@@ -278,15 +296,15 @@ function App() {
 
   return (
     <div className="app-layout">
-      {sidebarOpen && (
-        <Sidebar
-          history={history}
-          onSelectHistory={handleSelectHistory}
-          selectedHistoryId={selectedHistoryId}
-          onClearHistory={handleClearHistory}
-          onDeleteHistory={handleDeleteHistory}
-        />
-      )}
+      <Sidebar
+        isOpen={sidebarOpen}
+        history={history}
+        onSelectHistory={handleSelectHistory}
+        selectedHistoryId={selectedHistoryId}
+        onClearHistory={handleClearHistory}
+        onDeleteHistory={handleDeleteHistory}
+        onClose={() => setSidebarOpen(false)}
+      />
       
       <div className={`main-content ${sidebarOpen ? 'with-sidebar' : ''}`}>
         <div className="top-bar">
