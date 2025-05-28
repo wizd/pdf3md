@@ -376,6 +376,9 @@ body {
   overflow: hidden;
   border: 1px solid rgba(226, 232, 240, 0.8);
   backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 240px); /* Constrain height to leave room for other UI elements */
 }
 
 .markdown-header {
@@ -434,10 +437,11 @@ body {
 .markdown-content {
   padding: 32px;
   background: rgba(255, 255, 255, 0.95);
-  max-height: 600px;
+  flex: 1;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(203, 213, 225, 0.6) transparent;
+  min-height: 0; /* Allow flex child to shrink */
 }
 
 .markdown-content::-webkit-scrollbar {
@@ -632,7 +636,6 @@ pre {
 
   .markdown-content {
     padding: 16px;
-    max-height: 400px;
   }
 
   pre {
