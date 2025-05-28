@@ -170,7 +170,7 @@ This project is **dual-licensed**:
 
 ## Acknowledgments
 
--   PDF processing powered by [PyMuPDF4LLM](https://github.com/pymupdf/PyMuPDF4LLM).
+-   PDF processing powered by [PyMuPDF4LLM](https://pypi.org/project/pymupdf4llm/).
 -   Markdown to DOCX conversion via [Pandoc](https://pandoc.org/).
 -   Frontend developed with [React](https://reactjs.org/) and [Vite](https://vitejs.dev/).
 -   Backend implemented using [Flask](https://flask.palletsprojects.com/).
