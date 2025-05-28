@@ -633,30 +633,7 @@ function App() {
                     className="markdown-input"
                     value={markdownInput}
                     onChange={(e) => setMarkdownInput(e.target.value)}
-                    placeholder="# Your Markdown Here
-
-## Example Content
-
-This is a **bold** text and this is *italic* text.
-
-- Bullet point 1
-- Bullet point 2
-- Bullet point 3
-
-1. Numbered item 1
-2. Numbered item 2
-3. Numbered item 3
-
-```javascript
-// Code block example
-function hello() {
-  console.log('Hello, World!');
-}
-```
-
-> This is a blockquote
-
-Regular paragraph text goes here."
+                    placeholder="# Your Markdown Here"
                     disabled={isConverting}
                   />
                   <div className="input-actions">

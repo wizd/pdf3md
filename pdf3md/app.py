@@ -21,6 +21,8 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 import markdown
 import html2text
+import pypandoc
+import traceback 
 
 app = Flask(__name__)
 CORS(app)
@@ -223,129 +225,52 @@ def get_progress(conversion_id):
         return jsonify({'error': f'Progress error: {str(e)}'}), 500
 
 def markdown_to_docx(markdown_text, filename="document"):
-    """Convert markdown text to a Word document"""
+    """Convert markdown text to a Word document using Pandoc."""
+    temp_docx_path = None
     try:
-        # Create a new Document
-        doc = Document()
+        # pypandoc.ensure_pandoc_installed() # Optional
+
+        # Generate a unique temporary filename for the DOCX output
+        temp_docx_filename = f"temp_pandoc_output_{uuid.uuid4()}.docx"
+        # Ensure the temp path is absolute, similar to how temp PDFs are handled
+        temp_docx_path = os.path.abspath(temp_docx_filename)
+
+        logger.debug(f"Attempting to convert markdown to docx for filename: {filename} using pandoc, outputting to {temp_docx_path}")
         
-        # Split markdown into paragraphs (separated by double newlines)
-        paragraphs = re.split(r'\n\s*\n', markdown_text)
+        pypandoc.convert_text(
+            markdown_text,
+            'docx',
+            format='md',
+            outputfile=temp_docx_path
+            # extra_args=['--verbose'] # Uncomment for pandoc verbose logging if needed
+        )
         
-        for paragraph_text in paragraphs:
-            paragraph_text = paragraph_text.strip()
-            if not paragraph_text:
-                continue
-                
-            # Split paragraph into lines
-            lines = paragraph_text.split('\n')
+        # Read the generated DOCX file into a BytesIO buffer
+        with open(temp_docx_path, 'rb') as f:
+            output_docx_bytes = f.read()
             
-            # Check if this is a special block (header, code, list, etc.)
-            first_line = lines[0].strip()
-            
-            # Handle headers
-            if first_line.startswith('#'):
-                header_level = len(first_line) - len(first_line.lstrip('#'))
-                header_text = first_line.lstrip('# ').strip()
-                
-                if header_level == 1:
-                    doc.add_heading(header_text, level=1)
-                elif header_level == 2:
-                    doc.add_heading(header_text, level=2)
-                elif header_level == 3:
-                    doc.add_heading(header_text, level=3)
-                else:
-                    doc.add_heading(header_text, level=4)
-                    
-            # Handle code blocks
-            elif first_line.startswith('```'):
-                # Find all lines between ``` markers
-                code_lines = []
-                in_code = False
-                for line in lines:
-                    if line.strip().startswith('```'):
-                        if in_code:
-                            break
-                        in_code = True
-                        continue
-                    if in_code:
-                        code_lines.append(line)
-                
-                # Add code block as a paragraph with monospace font
-                code_text = '\n'.join(code_lines)
-                code_para = doc.add_paragraph()
-                code_run = code_para.add_run(code_text)
-                code_run.font.name = 'Courier New'
-                code_para.style = 'Normal'
-                
-            # Handle bullet points
-            elif first_line.startswith('- ') or first_line.startswith('* '):
-                for line in lines:
-                    line = line.strip()
-                    if line.startswith('- ') or line.startswith('* '):
-                        bullet_text = line[2:].strip()
-                        doc.add_paragraph(bullet_text, style='List Bullet')
-                        
-            # Handle numbered lists
-            elif re.match(r'^\d+\.\s', first_line):
-                for line in lines:
-                    line = line.strip()
-                    if re.match(r'^\d+\.\s', line):
-                        list_text = re.sub(r'^\d+\.\s', '', line)
-                        doc.add_paragraph(list_text, style='List Number')
-                        
-            # Handle blockquotes
-            elif first_line.startswith('>'):
-                quote_lines = []
-                for line in lines:
-                    line = line.strip()
-                    if line.startswith('>'):
-                        quote_lines.append(line[1:].strip())
-                    else:
-                        quote_lines.append(line)
-                
-                quote_text = ' '.join(quote_lines)
-                quote_para = doc.add_paragraph(quote_text)
-                quote_para.style = 'Quote'
-                
-            # Handle regular paragraphs
-            else:
-                # Join all lines in the paragraph with spaces (single line breaks become spaces)
-                full_text = ' '.join(line.strip() for line in lines if line.strip())
-                
-                # Process inline formatting
-                para = doc.add_paragraph()
-                
-                # Simple bold and italic processing
-                parts = re.split(r'(\*\*.*?\*\*|\*.*?\*|`.*?`)', full_text)
-                
-                for part in parts:
-                    if part.startswith('**') and part.endswith('**'):
-                        # Bold text
-                        run = para.add_run(part[2:-2])
-                        run.bold = True
-                    elif part.startswith('*') and part.endswith('*') and not part.startswith('**'):
-                        # Italic text
-                        run = para.add_run(part[1:-1])
-                        run.italic = True
-                    elif part.startswith('`') and part.endswith('`'):
-                        # Inline code
-                        run = para.add_run(part[1:-1])
-                        run.font.name = 'Courier New'
-                    else:
-                        # Regular text
-                        if part:
-                            para.add_run(part)
-        
-        # Save to BytesIO
-        doc_buffer = BytesIO()
-        doc.save(doc_buffer)
+        doc_buffer = BytesIO(output_docx_bytes)
         doc_buffer.seek(0)
         
+        logger.info(f"Successfully converted markdown to docx for {filename} using pandoc (via temp file: {temp_docx_path}).")
         return doc_buffer
         
+    except FileNotFoundError: # Specifically catch if pandoc is not found
+        logger.error('Pandoc not found. Please ensure Pandoc is installed and in your PATH.')
+        logger.error(traceback.format_exc())
+        raise RuntimeError('Pandoc not found. Conversion failed.') # Re-raise a more specific error
     except Exception as e:
-        logger.error(f'Error converting markdown to docx: {str(e)}')
-        raise e
+        logger.error(f'Error converting markdown to docx using Pandoc: {str(e)}')
+        logger.error(traceback.format_exc())
+        raise e # Re-raise to be handled by the route
+    finally:
+        # Clean up the temporary DOCX file
+        if temp_docx_path and os.path.exists(temp_docx_path):
+            try:
+                os.remove(temp_docx_path)
+                logger.debug(f"Successfully removed temporary pandoc output file: {temp_docx_path}")
+            except Exception as e_clean:
+                logger.error(f"Error removing temporary pandoc output file {temp_docx_path}: {str(e_clean)}")
 
 @app.route('/convert-markdown-to-word', methods=['POST'])
 def convert_markdown_to_word():
