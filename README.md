@@ -1,266 +1,153 @@
-# PDF to Markdown Converter 📄➡️📝
+# PDF to Markdown and Word Converter
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-This project is dual-licensed. See the [License](#license) section for details.
+This project is dual-licensed. Please see the [License](#license) section for comprehensive details.
 
-A modern, user-friendly web application that converts PDF documents to clean, formatted Markdown text. Built with React frontend and Python Flask backend, featuring real-time conversion progress tracking and a sleek interface.
+PDF3MD is a web application designed for efficient conversion of PDF documents into well-structured Markdown and Microsoft Word (DOCX) formats. It features a React-based frontend and a Python Flask backend, providing a seamless user experience with real-time progress updates.
 
-## ✨ Features
+## Core Features
 
-- **Drag & Drop Interface**: Simply drag your PDF files into the application
-- **Real-time Progress Tracking**: Watch your conversion progress with detailed status updates
-- **Clean Markdown Output**: Get well-formatted Markdown that preserves document structure
-- **File Information Display**: See file size, page count, and conversion timestamp
-- **Modern UI**: Beautiful, responsive interface that works on all devices
-- **Fast Processing**: Efficient conversion using PyMuPDF4LLM library
+-   **PDF to Markdown Conversion**: Transforms PDF documents into clean, readable Markdown, preserving structural elements.
+-   **Markdown to Word (DOCX) Conversion**: Converts user-provided Markdown text to DOCX format using Pandoc for high-fidelity output.
+-   **Multi-File Upload**: Supports uploading and processing multiple PDF files simultaneously for PDF to Markdown conversion.
+-   **Drag & Drop Interface**: User-friendly file uploads via drag and drop or traditional file selection.
+-   **Real-time Progress Tracking**: Detailed status updates during the conversion process for each file.
+-   **File Information Display**: Shows original filename, file size, page count, and conversion timestamp.
+-   **Modern and Responsive UI**: Intuitive interface designed for ease of use across various devices.
 
-## 🚀 Quick Start with Docker (Recommended)
+## Technology Stack
 
-The easiest way to get started is using Docker Compose. This will set up both the frontend and backend automatically.
+-   **Frontend**: React, Vite
+-   **Backend**: Python, Flask
+-   **PDF Processing**: PyMuPDF4LLM
+-   **Markdown to DOCX Conversion**: Pandoc
 
-### Prerequisites
+## Getting Started
 
-- [Docker](https://docs.docker.com/get-docker/) installed on your system
-- [Docker Compose](https://docs.docker.com/compose/install/) (usually comes with Docker Desktop)
-
-### Production Setup
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/murtaza-nasir/pdf3md.git
-   cd pdf3md
-   ```
-
-2. **Start the application**:
-   ```bash
-   docker compose up -d
-   ```
-
-3. **Access the application**:
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:6201
-
-4. **Stop the application**:
-   ```bash
-   docker compose down
-   ```
-
-### Development Setup
-
-For development with hot-reloading and live code changes:
-
-1. **Start in development mode**:
-   ```bash
-   docker-compose -f docker-compose.dev.yml up
-   ```
-
-2. **Access the application**:
-   - Frontend (with hot-reload): http://localhost:5173
-   - Backend API: http://localhost:6201
-
-3. **Stop development environment**:
-   ```bash
-   docker-compose -f docker-compose.dev.yml down
-   ```
-
-## 🛠️ Manual Setup (Alternative)
-
-If you prefer to run the application without Docker, you can set it up manually.
+The easiest and recommended way to run PDF3MD is using the provided Docker quick start script.
 
 ### Prerequisites
 
-- Python 3.8+ with pip
-- Node.js 16+ with npm
-- (Optional) Conda environment
+-   Docker Engine
+-   Docker Compose (typically included with Docker Desktop)
+-   Git (for cloning the repository)
 
-### Backend Setup
+### Using the Quick Start Script (Recommended for Docker)
 
-1. **Navigate to the backend directory**:
-   ```bash
-   cd pdf3md
-   ```
+This script simplifies managing the Docker containers for both production and development environments.
 
-2. **Install Python dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+1.  **Clone the Repository**:
+    ```bash
+    git clone https://github.com/murtaza-nasir/pdf3md.git
+    cd pdf3md
+    ```
 
-3. **Start the backend server**:
-   ```bash
-   python app.py
-   ```
-   
-   The backend will be available at http://localhost:6201
+2.  **Start in Production Mode**:
+    ```bash
+    ./docker-start.sh start
+    ```
+    -   Access Frontend: `http://localhost:3000`
+    -   Access Backend API: `http://localhost:6201`
 
-### Frontend Setup
+3.  **Start in Development Mode** (with hot-reloading):
+    ```bash
+    ./docker-start.sh dev
+    ```
+    -   Access Frontend (Vite Dev Server): `http://localhost:5173`
+    -   Access Backend API: `http://localhost:6201`
 
-1. **In a new terminal, navigate to the frontend directory**:
-   ```bash
-   cd pdf3md
-   ```
+4.  **Other Useful Script Commands**:
+    ```bash
+    ./docker-start.sh stop      # Stop all services
+    ./docker-start.sh status    # Check running services
+    ./docker-start.sh logs      # View logs from services
+    ./docker-start.sh help      # Display all available script commands
+    ```
+    Ensure the script is executable: `chmod +x ./docker-start.sh`
 
-2. **Install Node.js dependencies**:
-   ```bash
-   npm install
-   ```
+### Direct Docker Compose Usage (Alternative)
 
-3. **Start the development server**:
-   ```bash
-   npm run dev
-   ```
-   
-   The frontend will be available at http://localhost:5173
+If you prefer to use Docker Compose commands directly:
 
-### Using the Convenience Scripts
+#### Production Deployment
 
-The project includes handy scripts for starting and stopping both services:
+1.  **Clone the Repository** (if not already done):
+    ```bash
+    git clone https://github.com/murtaza-nasir/pdf3md.git
+    cd pdf3md
+    ```
+2.  **Start Services**:
+    ```bash
+    docker compose up -d
+    ```
+3.  **Access Application**: Frontend at `http://localhost:3000`, Backend API at `http://localhost:6201`.
+4.  **Stop Services**:
+    ```bash
+    docker compose down
+    ```
 
-- **Start both frontend and backend**:
-  ```bash
-  cd pdf3md
-  ./start_server.sh
-  ```
+#### Development Environment
 
-- **Stop both services**:
-  ```bash
-  cd pdf3md
-  ./stop_server.sh
-  ```
+1.  **Start Services**:
+    ```bash
+    docker-compose -f docker-compose.dev.yml up
+    ```
+2.  **Access Application**: Frontend (Vite) at `http://localhost:5173`, Backend API at `http://localhost:6201`.
+3.  **Stop Services**:
+    ```bash
+    docker-compose -f docker-compose.dev.yml down
+    ```
 
-## 📖 How to Use
+### Manual Setup
 
-1. **Open the application** in your web browser
-2. **Upload a PDF** by either:
-   - Dragging and dropping a PDF file onto the upload area
-   - Clicking the upload area and selecting a file
-3. **Watch the progress** as your PDF is converted
-4. **Copy the result** - the Markdown text will appear in the output area
-5. **Download or copy** the converted Markdown for use in your projects
+Alternatively, you can run the application components manually.
 
-## 🏗️ Project Structure
+#### Backend (Flask)
 
-```
-pdf3md/
-├── src/                    # React frontend source code
-│   ├── components/         # React components
-│   ├── App.jsx            # Main application component
-│   └── main.jsx           # Application entry point
-├── public/                # Static assets
-├── app.py                 # Flask backend server
-├── requirements.txt       # Python dependencies
-├── package.json           # Node.js dependencies
-├── Dockerfile.backend     # Backend Docker configuration
-├── Dockerfile.frontend    # Frontend Docker configuration
-├── start_server.sh        # Convenience script to start services
-├── stop_server.sh         # Convenience script to stop services
-└── vite.config.js         # Vite build configuration
+1.  Navigate to the `pdf3md` sub-directory: `cd pdf3md`
+2.  Install Python dependencies: `pip install -r requirements.txt`
+3.  Start the backend server: `python app.py`
+    (The backend will be available at `http://localhost:6201`)
 
-docker-compose.yml         # Production Docker Compose
-docker-compose.dev.yml     # Development Docker Compose
-README.md                  # This file
-```
+#### Frontend (React)
 
-## 🔧 Configuration
+1.  In a new terminal, navigate to the `pdf3md` sub-directory: `cd pdf3md`
+2.  Install Node.js dependencies: `npm install`
+3.  Start the frontend development server: `npm run dev`
+    (The frontend will be available at `http://localhost:5173`)
 
-### Backend Configuration
+#### Convenience Scripts
 
-The Flask backend runs on port 6201 by default. You can modify this in `app.py`:
+The `pdf3md` sub-directory contains scripts for managing both services:
+-   `./start_server.sh`: Starts both frontend and backend.
+-   `./stop_server.sh`: Stops both services.
+    (Ensure these scripts are executable: `chmod +x ./start_server.sh ./stop_server.sh`)
 
-```python
-app.run(host='0.0.0.0', port=6201)
-```
+## Usage Instructions
 
-### Frontend Configuration
+1.  Open the PDF3MD application in your web browser.
+2.  Upload one or more PDF files using the drag-and-drop area or by clicking to select files.
+3.  Monitor the real-time progress as each PDF is converted.
+4.  Once a file is processed, the resulting Markdown will be displayed.
+5.  You can then:
+    -   Copy the Markdown text (from PDF to MD conversion).
+    -   In "MD → Word" mode, input Markdown and download the content as a DOCX file (powered by Pandoc).
 
-The React frontend is configured to proxy API requests to the backend. If you change the backend port, update the proxy configuration in `vite.config.js`.
+## Configuration Notes
 
-### Environment Variables
+-   **Backend Port**: The Flask server runs on port `6201` by default, configurable in `pdf3md/app.py`.
+-   **Frontend API Proxy**: The Vite development server proxies API requests. If the backend port changes, update `pdf3md/vite.config.js`.
+-   **Environment Variables (Docker)**:
+    -   `FLASK_ENV`: `development` or `production`.
+    -   `FLASK_DEBUG`: `1` for debug mode.
 
-For Docker deployments, you can customize the following environment variables:
+## Troubleshooting
 
-- `FLASK_ENV`: Set to `development` or `production`
-- `FLASK_DEBUG`: Set to `1` for debug mode
-- `PYTHONUNBUFFERED`: Set to `1` for immediate output
-
-## 🐳 Docker Commands Reference
-
-### Production Commands
-```bash
-# Build and start services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
-
-# Rebuild services
-docker-compose up -d --build
-
-# Remove everything (containers, networks, volumes)
-docker-compose down -v --remove-orphans
-```
-
-### Development Commands
-```bash
-# Start development environment
-docker-compose -f docker-compose.dev.yml up
-
-# Start in background
-docker-compose -f docker-compose.dev.yml up -d
-
-# View logs
-docker-compose -f docker-compose.dev.yml logs -f
-
-# Stop development environment
-docker-compose -f docker-compose.dev.yml down
-```
-
-## 🔍 Troubleshooting
-
-### Common Issues
-
-**Port already in use**:
-- Make sure no other services are running on ports 3000, 5173, or 6201
-- Use `docker-compose down` to stop any running containers
-
-**Permission denied on scripts**:
-```bash
-chmod +x pdf3md/start_server.sh
-chmod +x pdf3md/stop_server.sh
-```
-
-**Docker build fails**:
-- Make sure Docker is running
-- Try rebuilding with: `docker-compose up --build`
-
-**Frontend can't connect to backend**:
-- Verify the backend is running on port 6201
-- Check that CORS is properly configured in the Flask app
-
-### Logs and Debugging
-
-**View Docker logs**:
-```bash
-# All services
-docker-compose logs -f
-
-# Specific service
-docker-compose logs -f backend
-docker-compose logs -f frontend
-```
-
-**Manual setup logs**:
-- Backend logs: Check `pdf3md/backend.log`
-- Frontend logs: Check `pdf3md/frontend.log`
-
-## 🙏 Acknowledgments
-
-- Built with [PyMuPDF4LLM](https://github.com/pymupdf/PyMuPDF4LLM) for PDF processing
-- Frontend powered by [React](https://reactjs.org/) and [Vite](https://vitejs.dev/)
-- Backend built with [Flask](https://flask.palletsprojects.com/)
+-   **Port Conflicts**: Ensure ports `3000`, `5173` (for dev), and `6201` are not in use by other applications. Use `docker compose down` to stop existing PDF3MD containers.
+-   **Script Permissions (Manual Setup)**: If `start_server.sh` or `stop_server.sh` fail, make them executable: `chmod +x pdf3md/start_server.sh pdf3md/stop_server.sh`.
+-   **Docker Issues**: Ensure Docker is running. Try rebuilding images with `docker compose up --build`.
+-   **API Connectivity**: Verify the backend is running and accessible. Check browser console for errors.
 
 ## License
 
@@ -269,26 +156,28 @@ This project is **dual-licensed**:
 1.  **GNU Affero General Public License v3.0 (AGPLv3)**
     [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-    Speakr is offered under the AGPLv3 as its open-source license. You are free to use, modify, and distribute this software under the terms of the AGPLv3. A key condition of the AGPLv3 is that if you run a modified version on a network server and provide access to it for others, you must also make the source code of your modified version available to those users under the AGPLv3.
+    PDF3MD is offered under the AGPLv3 as its open-source license. You are free to use, modify, and distribute this software under the terms of the AGPLv3. A key condition of the AGPLv3 is that if you run a modified version on a network server and provide access to it for others, you must also make the source code of your modified version available to those users under the AGPLv3.
 
-    * You **must** create a file named `LICENSE` (or `COPYING`) in the root of your repository and paste the full text of the [GNU AGPLv3 license](https://www.gnu.org/licenses/agpl-3.0.txt) into it.
-    * Read the full license text carefully to understand your rights and obligations.
+    You **must** create a file named `LICENSE` (or `COPYING`) in the root of your repository and paste the full text of the [GNU AGPLv3 license](https://www.gnu.org/licenses/agpl-3.0.txt) into it. Read the full license text carefully to understand your rights and obligations.
 
 2.  **Commercial License**
 
-    For users or organizations who cannot or do not wish to comply with the terms of the AGPLv3 (for example, if you want to integrate Speakr into a proprietary commercial product or service without being obligated to share your modifications under AGPLv3), a separate commercial license is available.
+    For users or organizations who cannot or do not wish to comply with the terms of the AGPLv3 (for example, if you want to integrate PDF3MD into a proprietary commercial product or service without being obligated to share your modifications under AGPLv3), a separate commercial license is available.
 
     Please contact **[Your Name/Company Name and Email Address or Website Link for Licensing Inquiries]** for details on obtaining a commercial license.
 
 **You must choose one of these licenses** under which to use, modify, or distribute this software. If you are using or distributing the software without a commercial license agreement, you must adhere to the terms of the AGPLv3.
 
+## Acknowledgments
+
+-   PDF processing powered by [PyMuPDF4LLM](https://github.com/pymupdf/PyMuPDF4LLM).
+-   Markdown to DOCX conversion via [Pandoc](https://pandoc.org/).
+-   Frontend developed with [React](https://reactjs.org/) and [Vite](https://vitejs.dev/).
+-   Backend implemented using [Flask](https://flask.palletsprojects.com/).
+
 ## Contributing
 
-While direct code contributions are not the primary focus at this stage, feedback, bug reports, and feature suggestions are highly valuable! Please feel free to open an Issue on the GitHub repository.
+Feedback, bug reports, and feature suggestions are highly appreciated. Please open an Issue on the GitHub repository.
 
 **Note on Future Contributions and CLAs:**
-Should this project begin accepting code contributions from external developers in the future, signing a **Contributor License Agreement (CLA)** will be **required** before any pull requests can be merged. This policy ensures that the project maintainer receives the necessary rights to distribute all contributions under both the AGPLv3 and the commercial license options offered. Details on the CLA process will be provided if and when the project formally opens up to external code contributions.
-
----
-
-**Happy converting!** If you find this tool useful, please consider giving it a star ⭐
+Should this project begin accepting code contributions from external developers in the future, signing a Contributor License Agreement (CLA) will be required before any pull requests can be merged. This policy ensures that the project maintainer receives the necessary rights to distribute all contributions under both the AGPLv3 and the commercial license options offered. Details on the CLA process will be provided if and when the project formally opens up to external code contributions.

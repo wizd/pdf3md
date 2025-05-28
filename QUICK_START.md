@@ -1,8 +1,8 @@
-# 🚀 Quick Start Guide
+# Quick Start Guide
 
 Get PDF3MD running in under 2 minutes!
 
-## Option 1: Docker (Recommended) 🐳
+## Option 1: Docker (Recommended)
 
 **Prerequisites**: Docker installed on your system
 
@@ -19,7 +19,7 @@ cd pdf3md
 # Backend: http://localhost:6201
 ```
 
-**That's it!** 🎉
+**That's it!**
 
 ### Development Mode
 ```bash
@@ -35,7 +35,7 @@ cd pdf3md
 ./docker-start.sh help      # See all options
 ```
 
-## Option 2: Manual Setup 🛠️
+## Option 2: Manual Setup
 
 **Prerequisites**: Python 3.8+, Node.js 16+
 
@@ -57,17 +57,22 @@ npm run dev
 # Backend: http://localhost:6201
 ```
 
-## Using the App 📄
+## Using the App
 
-1. **Open** http://localhost:3000 (or 5173 for dev)
-2. **Drag & drop** a PDF file or click to upload
-3. **Watch** the conversion progress
-4. **Copy** the generated Markdown text
+1. **Open** http://localhost:3000 (or http://localhost:5173 for development mode).
+2. For **PDF to Markdown**:
+    - **Drag & drop** one or more PDF files or click to upload.
+    - **Watch** the conversion progress.
+    - **Copy** the generated Markdown text.
+3. For **Markdown to Word**:
+    - Switch to "MD → Word" mode in the application.
+    - Paste or type your Markdown content.
+    - Click "Download as Word" to get the DOCX file.
 
-## Need Help? 🆘
+## Need Help?
 
 - Check the full [README.md](README.md) for detailed instructions
 - View logs: `./docker-start.sh logs`
 - Stop everything: `./docker-start.sh stop`
 
-**Happy converting!** ✨
+**Happy converting!**
