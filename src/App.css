@@ -135,7 +135,7 @@ body {
   display: flex;
   background: rgba(241, 245, 249, 0.8);
   border-radius: 12px;
-  padding: 4px;
+  padding: 2px;
   border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
@@ -149,7 +149,7 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   color: #64748b;
-  white-space: nowrap;
+  white-space: nowrap; /* Restored for short pill button text */
 }
 
 .mode-btn:hover {

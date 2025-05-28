@@ -387,22 +387,6 @@ function App() {
             <h1>{mode === 'pdf-to-md' ? 'PDF to Markdown Converter' : 'Markdown to Word Converter'}</h1>
           </div>
           <div className="top-bar-controls">
-            <div className="mode-switcher">
-              <button 
-                className={`mode-btn ${mode === 'pdf-to-md' ? 'active' : ''}`}
-                onClick={() => setMode('pdf-to-md')}
-                title="Convert PDF to Markdown"
-              >
-                PDF → MD
-              </button>
-              <button 
-                className={`mode-btn ${mode === 'md-to-word' ? 'active' : ''}`}
-                onClick={() => setMode('md-to-word')}
-                title="Convert Markdown to Word"
-              >
-                MD → Word
-              </button>
-            </div>
             {mode === 'pdf-to-md' && (
               <button 
                 className="file-select-btn"
@@ -416,6 +400,33 @@ function App() {
                 Select File
               </button>
             )}
+            <div
+              className="mode-switcher"
+              onClick={() => setMode(prevMode => prevMode === 'pdf-to-md' ? 'md-to-word' : 'pdf-to-md')}
+              title={mode === 'pdf-to-md' ? "Current mode: PDF to Markdown. Click to switch to Markdown to Word." : "Current mode: Markdown to Word. Click to switch to PDF to Markdown."}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault(); // Prevent default space scroll
+                  setMode(prevMode => prevMode === 'pdf-to-md' ? 'md-to-word' : 'pdf-to-md');
+                }
+              }}
+              style={{ cursor: 'pointer' }} // Add cursor pointer to the div
+            >
+              <div
+                className={`mode-btn ${mode === 'pdf-to-md' ? 'active' : ''}`}
+                // Removed title here as parent has comprehensive title
+              >
+                PDF → MD
+              </div>
+              <div
+                className={`mode-btn ${mode === 'md-to-word' ? 'active' : ''}`}
+                // Removed title here as parent has comprehensive title
+              >
+                MD → Word
+              </div>
+            </div>
           </div>
         </div>
 
