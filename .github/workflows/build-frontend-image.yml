@@ -2,16 +2,14 @@ name: Docker Build and Publish Frontend
 
 on:
   push:
-    branches: [ "master" ] # Consider changing to "main" if that's your default branch
+    branches: [ "main" ] 
     tags: [ 'v*.*.*' ]
   pull_request:
-    branches: [ "master" ] # Consider changing to "main" if that's your default branch
+    branches: [ "main" ] 
 
 env:
-  # Use docker.io for Docker Hub if empty
   REGISTRY: docker.io
-  # Update this to your Docker Hub username and desired image name
-  IMAGE_NAME: murtaza-nasir/pdf3md-frontend
+  IMAGE_NAME: learnedmachine/pdf3md-frontend
 
 jobs:
   build:

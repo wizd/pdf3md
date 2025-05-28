@@ -10,8 +10,7 @@ on:
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: docker.io
-  # Update this to your Docker Hub username and desired image name
-  IMAGE_NAME: murtaza-nasir/pdf3md-backend
+  IMAGE_NAME: learnedmachine/pdf3md-backend
 
 jobs:
   build:

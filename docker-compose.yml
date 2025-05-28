@@ -1,6 +1,6 @@
 services:
   backend:
-    image: docker.io/murtaza-nasir/pdf3md-backend:latest # Ensure 'murtaza-nasir' is your DockerHub username
+    image: docker.io/learnedmachine/pdf3md-backend:latest 
     container_name: pdf3md-backend
     ports:
       - "6201:6201"
@@ -18,7 +18,7 @@ services:
       start_period: 40s
 
   frontend:
-    image: docker.io/murtaza-nasir/pdf3md-frontend:latest # Ensure 'murtaza-nasir' is your DockerHub username
+    image: docker.io/learnedmachine/pdf3md-frontend:latest 
     container_name: pdf3md-frontend
     ports:
       - "3000:3000"
