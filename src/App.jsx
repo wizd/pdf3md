@@ -38,7 +38,7 @@ function App() {
 
   // Load history from localStorage on component mount
   useEffect(() => {
-    const savedHistory = localStorage.getItem('pdf2md-history');
+    const savedHistory = localStorage.getItem('pdf3md-history');
     console.log('Loading history from localStorage:', savedHistory);
     if (savedHistory) {
       try {
@@ -73,7 +73,7 @@ function App() {
     try {
       const historyToSave = JSON.stringify(history);
       console.log('Saving history to localStorage (actual save):', historyToSave);
-      localStorage.setItem('pdf2md-history', historyToSave);
+      localStorage.setItem('pdf3md-history', historyToSave);
     } catch (error) {
       console.error('Error saving history to localStorage:', error);
     }
@@ -249,7 +249,7 @@ function App() {
     if (window.confirm('Are you sure you want to clear all conversion history? This action cannot be undone.')) {
       setHistory([])
       setSelectedHistoryId(null)
-      localStorage.removeItem('pdf2md-history')
+      localStorage.removeItem('pdf3md-history')
     }
   }
 
