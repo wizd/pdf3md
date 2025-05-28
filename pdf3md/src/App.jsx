@@ -1,8 +1,10 @@
 // src/App.jsx
 import { useState, useRef, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
+import MultiFileUploadStatus from './components/MultiFileUploadStatus' // Import the new component
 import './App.css'
 import './components/LoadingStyles.css'
+import './components/MultiFileUploadStatus.css' // Import its CSS
 
 function App() {
   const [markdown, setMarkdown] = useState('')
@@ -12,7 +14,9 @@ function App() {
   const [history, setHistory] = useState([])
   const [selectedHistoryId, setSelectedHistoryId] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(true) // Start open on desktop, will be handled by mobile detection
-  const [currentFile, setCurrentFile] = useState(null)
+  const [currentFile, setCurrentFile] = useState(null) // Represents the file currently being processed
+  const [uploadQueue, setUploadQueue] = useState([]); // Holds files selected for upload
+  const [fileUploadStates, setFileUploadStates] = useState([]); // Tracks status of each file in a batch
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [loadingStage, setLoadingStage] = useState('')
   const [totalPages, setTotalPages] = useState(0)
@@ -23,6 +27,7 @@ function App() {
   const [isConverting, setIsConverting] = useState(false)
   const fileInputRef = useRef(null)
   const isInitialMount = useRef(true); // Ref to track initial mount
+  const activeConversionId = useRef(null); // Tracks the current conversion ID for polling
 
   // Check if device is mobile
   useEffect(() => {
@@ -79,6 +84,39 @@ function App() {
     }
   }, [history]);
 
+  // Effect to process files from the uploadQueue one by one
+  useEffect(() => {
+    if (uploadQueue.length > 0 && !isLoading) {
+      const fileToProcess = uploadQueue[0];
+      setUploadQueue(prevQueue => prevQueue.slice(1));
+      processFile(fileToProcess);
+    } else if (uploadQueue.length === 0 && !isLoading && fileUploadStates.length > 0) {
+      const allSuccessfullyCompleted = fileUploadStates.every(f => f.status === 'Completed' || f.status === 'Skipped');
+      const hasErrors = fileUploadStates.some(f => f.status === 'Error');
+
+      if (allSuccessfullyCompleted && !hasErrors) {
+        // All files completed successfully, no errors
+        const timer = setTimeout(() => {
+          // Check again before clearing, in case new files were added
+          if (uploadQueue.length === 0 && fileUploadStates.every(f => f.status === 'Completed' || f.status === 'Skipped') && !fileUploadStates.some(f => f.status === 'Error')) {
+            setFileUploadStates([]); // Auto-hide modal
+          }
+        }, 5000); // Hide after 5 seconds
+        return () => clearTimeout(timer);
+      }
+      // If there are errors, or still processing, the modal remains visible.
+    }
+  }, [uploadQueue, isLoading, fileUploadStates]);
+
+
+  const updateFileStatus = (fileName, newStatus) => {
+    setFileUploadStates(prevStates =>
+      prevStates.map(fileState =>
+        fileState.name === fileName ? { ...fileState, ...newStatus } : fileState
+      )
+    );
+  };
+
   const addToHistory = (conversionData) => {
     const historyItem = {
       id: Date.now(),
@@ -87,133 +125,241 @@ function App() {
       fileSize: conversionData.fileSize,
       pageCount: conversionData.pageCount,
       timestamp: conversionData.timestamp
-    }
+    };
 
     setHistory(prevHistory => {
-      const newHistory = [historyItem, ...prevHistory]
-      // Keep only the last 50 items
-      return newHistory.slice(0, 50)
-    })
+      const newHistory = [historyItem, ...prevHistory];
+      return newHistory.slice(0, 50);
+    });
 
-    setSelectedHistoryId(historyItem.id)
-  }
+    // For multi-file, we might not want to auto-select the last converted item's markdown immediately
+    // setSelectedHistoryId(historyItem.id); 
+  };
 
-  const pollProgress = async (conversionId) => {
+  const pollProgress = async (conversionId, fileName) => {
+    activeConversionId.current = conversionId;
     const pollInterval = setInterval(async () => {
-      try {
-        const response = await fetch(`http://192.168.68.85:6201/progress/${conversionId}`)
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        
-        const progressData = await response.json()
-        
-        // Update progress state
-        setLoadingProgress(progressData.progress || 0)
-        setLoadingStage(progressData.stage || 'Processing...')
-        setTotalPages(progressData.total_pages || 0)
-        setCurrentPage(progressData.current_page || 0)
-        
-        // Check if conversion is complete
-        if (progressData.status === 'completed' && progressData.result) {
-          clearInterval(pollInterval)
-          setMarkdown(progressData.result.markdown)
-          addToHistory(progressData.result)
-          
-          // Reset loading state after a brief delay
-          setTimeout(() => {
-            setIsLoading(false)
-            setCurrentFile(null)
-            setLoadingProgress(0)
-            setLoadingStage('')
-            setTotalPages(0)
-            setCurrentPage(0)
-          }, 1000)
-        } else if (progressData.status === 'error') {
-          clearInterval(pollInterval)
-          alert(`Conversion failed: ${progressData.error}`)
-          setIsLoading(false)
-          setCurrentFile(null)
-          setLoadingProgress(0)
-          setLoadingStage('')
-          setTotalPages(0)
-          setCurrentPage(0)
-        }
-        
-      } catch (error) {
-        console.error('Error polling progress:', error)
-        clearInterval(pollInterval)
-        alert('Error checking conversion progress. Please try again.')
-        setIsLoading(false)
-        setCurrentFile(null)
-        setLoadingProgress(0)
-        setLoadingStage('')
-        setTotalPages(0)
-        setCurrentPage(0)
+      if (activeConversionId.current !== conversionId) {
+        clearInterval(pollInterval); // Stop polling if a new conversion has started
+        return;
       }
-    }, 500) // Poll every 500ms for smooth progress updates
-    
-    return pollInterval
-  }
+      try {
+        const response = await fetch(`http://192.168.68.85:6201/progress/${conversionId}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const progressData = await response.json();
 
-  const handleFileSelect = async (file) => {
-    if (!file) return
-    
+        setLoadingProgress(progressData.progress || 0);
+        setLoadingStage(progressData.stage || 'Processing...');
+        setTotalPages(progressData.total_pages || 0);
+        setCurrentPage(progressData.current_page || 0);
+        updateFileStatus(fileName, { 
+          progress: progressData.progress || 0, 
+          stage: progressData.stage || 'Processing...',
+          totalPages: progressData.total_pages || 0,
+          currentPage: progressData.current_page || 0,
+        });
+
+        if (progressData.status === 'completed' && progressData.result) {
+          clearInterval(pollInterval);
+          activeConversionId.current = null;
+          setMarkdown(progressData.result.markdown); // Display the latest markdown
+          addToHistory(progressData.result);
+          updateFileStatus(fileName, { status: 'Completed', markdown: progressData.result.markdown, progress: 100 });
+          
+          // Reset for next file or finish
+          setIsLoading(false); // This will trigger the useEffect to process next file in queue
+          setCurrentFile(null); 
+          // Don't reset global loading progress/stage here if queue has items
+          if (uploadQueue.length === 0) {
+            setLoadingProgress(0);
+            setLoadingStage('');
+            setTotalPages(0);
+            setCurrentPage(0);
+          }
+        } else if (progressData.status === 'error') {
+          clearInterval(pollInterval);
+          activeConversionId.current = null;
+          // alert(`Conversion failed for ${fileName}: ${progressData.error}`); // Removed alert for better UX with multi-upload
+          console.error(`Conversion failed for ${fileName}:`, progressData.error);
+          updateFileStatus(fileName, { 
+            status: 'Error', 
+            error: progressData.error || 'Unknown conversion error', 
+            progress: 0, 
+            stage: 'Error' 
+          });
+          setIsLoading(false); // Allow next file in queue to process
+          setCurrentFile(null);
+          if (uploadQueue.length === 0) {
+            setLoadingProgress(0);
+            setLoadingStage('');
+            setTotalPages(0);
+            setCurrentPage(0);
+          }
+        }
+      } catch (error) {
+        console.error('Error polling progress:', error);
+        clearInterval(pollInterval);
+        activeConversionId.current = null;
+        // alert(`Error checking conversion progress for ${fileName}. Please try again.`); // Removed alert
+        console.error(`Error polling progress for ${fileName}:`, error.message);
+        updateFileStatus(fileName, { 
+          status: 'Error', 
+          error: `Polling failed: ${error.message}`, 
+          progress: 0,
+          stage: 'Error' 
+        });
+        setIsLoading(false);
+        setCurrentFile(null);
+        if (uploadQueue.length === 0) {
+            setLoadingProgress(0);
+            setLoadingStage('');
+            setTotalPages(0);
+            setCurrentPage(0);
+          }
+      }
+    }, 500);
+    return pollInterval;
+  };
+
+  const processFile = async (file) => {
+    if (!file) return;
+
     if (!file.type.includes('pdf')) {
-      alert('Please select a PDF file')
-      return
+      alert(`Skipping non-PDF file: ${file.name}`);
+      updateFileStatus(file.name, { status: 'Skipped', error: 'Not a PDF' });
+      // Process next file if any
+      if (uploadQueue.length > 0) {
+        const nextFile = uploadQueue[0];
+        setUploadQueue(prev => prev.slice(1));
+        processFile(nextFile);
+      } else {
+        setIsLoading(false); // No more files
+      }
+      return;
     }
-    
-    setIsLoading(true)
-    setCurrentFile(file)
-    setLoadingProgress(0)
-    setLoadingStage('Uploading file...')
-    
-    const formData = new FormData()
-    formData.append('pdf', file)
+
+    setIsLoading(true); // Global loading state for the current file
+    setCurrentFile(file); // Set current file being processed
+    setLoadingProgress(0);
+    setLoadingStage('Uploading file...');
+    updateFileStatus(file.name, { status: 'Uploading', progress: 0, stage: 'Uploading file...' });
+
+    const formData = new FormData();
+    formData.append('pdf', file);
 
     try {
       const response = await fetch('http://192.168.68.85:6201/convert', {
         method: 'POST',
-        body: formData
-      })
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      
-      const data = await response.json()
-      
+      const data = await response.json();
       if (data.success && data.conversion_id) {
-        // Start polling for progress
-        pollProgress(data.conversion_id)
+        updateFileStatus(file.name, { status: 'Processing', stage: 'Waiting for conversion...' });
+        pollProgress(data.conversion_id, file.name);
       } else {
-        throw new Error(data.error || 'Conversion failed to start')
+        throw new Error(data.error || 'Conversion failed to start');
       }
     } catch (err) {
-      console.error(err)
-      alert('Error starting PDF conversion. Please try again.')
-      setIsLoading(false)
-      setCurrentFile(null)
-      setLoadingProgress(0)
-      setLoadingStage('')
-      setTotalPages(0)
-      setCurrentPage(0)
+      console.error(err);
+      alert(`Error starting PDF conversion for ${file.name}. Please try again.`);
+      updateFileStatus(file.name, { status: 'Error', error: err.message || 'Failed to start conversion' });
+      setIsLoading(false); // Allow next file in queue to process
+      setCurrentFile(null);
+       if (uploadQueue.length === 0) { // Reset global progress if queue is empty
+        setLoadingProgress(0);
+        setLoadingStage('');
+        setTotalPages(0);
+        setCurrentPage(0);
+      }
     }
-  }
+  };
 
-  const handleDrop = async (e) => {
-    e.preventDefault()
-    setIsDragging(false)
-    const file = e.dataTransfer.files[0]
-    await handleFileSelect(file)
-  }
+  const handleFilesSelected = (selectedFiles) => {
+    if (selectedFiles.length === 0) return;
 
-  const handleFileInput = async (e) => {
-    const file = e.target.files[0]
-    await handleFileSelect(file)
-  }
+    const newFileEntries = Array.from(selectedFiles)
+      .filter(file => file.type.includes('pdf')) // Filter for PDFs upfront
+      .map(file => ({
+        name: file.name,
+        size: file.size,
+        status: 'Queued', // Initial status
+        progress: 0,
+        stage: 'Queued',
+        totalPages: 0,
+        currentPage: 0,
+        markdown: null,
+        error: null,
+        originalFile: file // Keep original file object for processing
+      }));
+
+    if (newFileEntries.length === 0 && selectedFiles.length > 0) {
+      alert('No PDF files selected or all files were invalid.');
+      return;
+    }
+    
+    // If there are already files being processed or in queue, add to existing, otherwise start new batch
+    setFileUploadStates(prevStates => {
+        // If the previous batch is fully done, replace. Otherwise, append.
+        const isPreviousBatchDone = prevStates.every(f => f.status === 'Completed' || f.status === 'Error' || f.status === 'Skipped');
+        return isPreviousBatchDone ? newFileEntries : [...prevStates, ...newFileEntries];
+    });
+    setUploadQueue(prevQueue => [...prevQueue, ...newFileEntries.map(entry => entry.originalFile)]); // Add original files to processing queue
+    
+    // Clear main markdown display when new files are added
+    setMarkdown(''); 
+    setSelectedHistoryId(null);
+  };
+
+  const handleClearCompletedStatuses = () => {
+    setFileUploadStates([]); 
+  };
+
+  const handleRetryFile = (fileToRetry) => {
+    // Find the file in the current states to get its original details if needed
+    // For simplicity, we assume fileToRetry is the original file object
+    // or an object that can be directly processed by processFile.
+    
+    // Update its status to 'Queued' and add to the processing queue
+    setFileUploadStates(prevStates =>
+      prevStates.map(fs => 
+        fs.name === fileToRetry.name 
+        ? { ...fs, status: 'Queued', stage: 'Queued', progress: 0, error: null } 
+        : fs
+      )
+    );
+    setUploadQueue(prevQueue => [fileToRetry, ...prevQueue]); // Add to front of queue for immediate retry
+  };
+
+  const handleRemoveFileStatus = (fileNameToRemove) => {
+    setFileUploadStates(prevStates => prevStates.filter(f => f.name !== fileNameToRemove));
+    // If the removed file was in the uploadQueue, it should also be removed,
+    // but current logic processes queue first. This action is mostly for display cleanup post-processing.
+  };
+
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFilesSelected(files);
+    }
+  };
+
+  const handleFileInput = (e) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      handleFilesSelected(files);
+    }
+    // Reset file input to allow selecting the same file(s) again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleDragOver = (e) => {
     e.preventDefault()
@@ -371,6 +517,16 @@ function App() {
       )}
       
       <div className={`main-content ${mode === 'pdf-to-md' && sidebarOpen ? 'with-sidebar' : ''}`}>
+        {/* Multi-file upload status modal */}
+        {fileUploadStates.length > 0 && mode === 'pdf-to-md' && (
+          <MultiFileUploadStatus
+            fileStates={fileUploadStates}
+            onClearCompleted={handleClearCompletedStatuses}
+            onRetryFile={handleRetryFile}
+            onRemoveFile={handleRemoveFileStatus}
+          />
+        )}
+
         <div className="top-bar">
           {mode === 'pdf-to-md' && (
             <button 
@@ -443,7 +599,8 @@ function App() {
             onChange={handleFileInput}
             accept=".pdf"
             style={{ display: 'none' }}
-            disabled={isLoading}
+            disabled={isLoading && uploadQueue.length > 0} // Disable if actively processing a batch
+            multiple // Allow multiple file selection
           />
           
           <div className="app-wrapper">
@@ -560,8 +717,8 @@ Regular paragraph text goes here."
                   </div>
                 </div>
                 <div className="loading-text">
-                  <p>{loadingStage}</p>
-                  {currentFile && (
+                  <p>{loadingStage || "Preparing..."}</p>
+                  {currentFile && ( // This shows info for the *currently processing* file
                     <div className="file-info">
                       <span className="filename">📄 {currentFile.name}</span>
                       <span className="file-size">
@@ -580,11 +737,17 @@ Regular paragraph text goes here."
                       style={{ width: `${loadingProgress}%` }}
                     ></div>
                   </div>
+                   {fileUploadStates.length > 1 && (
+                    <div className="batch-info">
+                      Processing file {fileUploadStates.findIndex(f => f.name === currentFile?.name) + 1} of {fileUploadStates.length}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
-
-            {mode === 'pdf-to-md' && markdown && !isLoading && (
+            
+            {/* Display area for the last successfully converted markdown, if any */}
+            {mode === 'pdf-to-md' && markdown && !isLoading && uploadQueue.length === 0 && (
               <div className="markdown-container">
                 <div className="markdown-header">
                   <h3>Converted Markdown</h3>
