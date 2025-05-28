@@ -546,8 +546,8 @@ function App() {
             {mode === 'pdf-to-md' && (
               <button 
                 className="file-select-btn"
-                onClick={() => !isLoading && fileInputRef.current?.click()}
-                disabled={isLoading}
+                onClick={() => fileInputRef.current?.click()} // Allow click even if loading to add to queue
+                // disabled={isLoading} // Removed: Allow adding to queue even when loading
                 title="Select PDF file"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -599,7 +599,7 @@ function App() {
             onChange={handleFileInput}
             accept=".pdf"
             style={{ display: 'none' }}
-            disabled={isLoading && uploadQueue.length > 0} // Disable if actively processing a batch
+            // disabled={isLoading && uploadQueue.length > 0} // Removed: Allow adding to queue
             multiple // Allow multiple file selection
           />
           
