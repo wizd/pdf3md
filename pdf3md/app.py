@@ -14,13 +14,6 @@ import uuid
 import sys
 from io import StringIO, BytesIO
 import re
-from docx import Document
-from docx.shared import Inches
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.oxml.ns import qn
-from docx.oxml import OxmlElement
-import markdown
-import html2text
 import pypandoc
 import traceback 
 
