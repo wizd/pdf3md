@@ -1,0 +1,252 @@
+.multi-file-status-modal {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 380px; /* Can be adjusted */
+  max-height: 400px; /* Max height before scrolling */
+  background-color: #2d3748; /* Dark background - similar to sidebar */
+  color: #e2e8f0; /* Light text color */
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 6px 10px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #4a5568; /* Darker border */
+  transition: all 0.3s ease-in-out;
+}
+
+.multi-file-status-modal.minimized {
+  max-height: 60px; /* Height when minimized */
+  width: 280px; /* Smaller width when minimized */
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  border-bottom: 1px solid #4a5568;
+  background-color: #1a202c; /* Even darker header */
+  cursor: pointer; /* Allow clicking header to toggle minimize */
+}
+
+.modal-header h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #cbd5e0;
+}
+
+.modal-header .summary-info {
+  font-size: 0.8rem;
+  color: #a0aec0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.toggle-minimize-btn,
+.clear-all-btn {
+  background: none;
+  border: none;
+  color: #a0aec0;
+  font-size: 1rem; /* Icon size */
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.toggle-minimize-btn:hover,
+.clear-all-btn:hover {
+  color: #e2e8f0;
+  background-color: #4a5568;
+}
+
+.clear-all-btn {
+  font-size: 0.8rem; /* Text size for clear button if not using icon */
+  padding: 5px 8px;
+  background-color: #c53030; /* Darker red */
+  color: #fed7d7;
+}
+.clear-all-btn:hover {
+  background-color: #9b2c2c;
+  color: #fff;
+}
+
+
+.file-status-list {
+  list-style: none;
+  padding: 5px 0; /* Reduced padding */
+  margin: 0;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.multi-file-status-modal.minimized .file-status-list {
+  display: none; /* Hide list when minimized */
+}
+
+.file-status-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 15px; /* Compact padding */
+  border-bottom: 1px solid #4a5568; /* Separator */
+  gap: 10px;
+  transition: background-color 0.2s ease;
+}
+.file-status-item:last-child {
+  border-bottom: none;
+}
+.file-status-item:hover {
+  background-color: #4a5568; /* Hover effect */
+}
+
+
+.file-status-item .status-icon {
+  font-size: 1rem; /* Slightly smaller icon */
+  flex-shrink: 0;
+}
+
+.file-details-wrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* For text ellipsis */
+  gap: 3px; /* Space between name and status/progress */
+}
+
+.file-status-item .file-name-size {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+}
+
+.file-status-item .file-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #cbd5e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-status-item .file-size {
+  font-size: 0.75rem;
+  color: #a0aec0;
+  white-space: nowrap;
+  margin-left: 5px;
+}
+
+.status-and-progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-progress-text { /* For (xx%) */
+  font-size: 0.75rem;
+  color: #718096; /* Muted progress percentage */
+}
+
+
+.progress-bar-container-thin {
+  width: 100%; /* Takes full width of its column */
+  height: 5px; /* Thin bar */
+  background-color: #4a5568; /* Darker background for progress bar */
+  border-radius: 2.5px;
+  overflow: hidden;
+}
+
+.progress-bar-fill-thin {
+  height: 100%;
+  background-color: #4299e1; /* Blue for progress, matches theme */
+  border-radius: 2.5px;
+  transition: width 0.3s ease-in-out;
+}
+
+.file-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.file-item-actions button {
+  background: none;
+  border: 1px solid #718096; /* Darker border for buttons */
+  color: #a0aec0;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem; /* Smaller font for buttons */
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.file-item-actions button:hover {
+  background-color: #718096;
+  border-color: #a0aec0;
+  color: #e2e8f0;
+}
+
+.file-item-actions .retry-btn {
+  border-color: #4299e1;
+  color: #4299e1;
+}
+.file-item-actions .retry-btn:hover {
+  background-color: #2b6cb0; /* Darker blue on hover */
+  color: #bee3f8;
+}
+
+.file-item-actions .remove-btn {
+  border-color: #c53030;
+  color: #c53030;
+}
+.file-item-actions .remove-btn:hover {
+  background-color: #9b2c2c; /* Darker red on hover */
+  color: #fed7d7;
+}
+
+
+/* Status-specific text colors */
+.status-completed .status-text { color: #48bb78; } /* Green */
+.status-error .status-text { color: #f56565; } /* Red */
+.status-uploading .status-text,
+.status-processing .status-text { color: #4299e1; } /* Blue */
+.status-queued .status-text,
+.status-skipped .status-text { color: #a0aec0; } /* Grey */
+
+.status-error .file-name {
+  color: #f56565; /* Highlight filename in red on error */
+}
+
+
+/* Scrollbar styling for webkit browsers */
+.file-status-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.file-status-list::-webkit-scrollbar-track {
+  background: #1a202c; /* Dark track */
+  border-radius: 0 0 8px 0;
+}
+
+.file-status-list::-webkit-scrollbar-thumb {
+  background: #4a5568; /* Darker thumb */
+  border-radius: 3px;
+}
+
+.file-status-list::-webkit-scrollbar-thumb:hover {
+  background: #718096;
+}
