@@ -734,6 +734,33 @@ pre {
     border-color: rgba(51, 65, 85, 0.6);
   }
 
+  .markdown-input {
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%);
+    color: #e2e8f0;
+    border-color: rgba(51, 65, 85, 0.8);
+  }
+
+  .markdown-input:focus {
+    border-color: #3b82f6; /* Keep brand focus color */
+    background: rgba(30, 41, 59, 0.95); /* Slightly lighter than base for focus */
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Adjusted alpha for dark */
+  }
+
+  .markdown-input::placeholder {
+    color: #718096; /* A bit lighter than default for better contrast on dark */
+  }
+
+  .input-header h3 {
+    /* Ensure gradient text is visible on dark mode if it's not already handled */
+    /* If it uses -webkit-text-fill-color: transparent, it should adapt if body text color changes */
+    /* No specific change needed if it's already fine, but good to check */
+  }
+
+  .input-header p {
+    color: #94a3b8; /* Lighter paragraph text for dark mode */
+  }
+
+
   .loading-text p {
     color: #cbd5e1;
   }
