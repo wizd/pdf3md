@@ -18,6 +18,9 @@ function App() {
   const [totalPages, setTotalPages] = useState(0)
   const [currentPage, setCurrentPage] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
+  const [mode, setMode] = useState('pdf-to-md') // 'pdf-to-md' or 'md-to-word'
+  const [markdownInput, setMarkdownInput] = useState('')
+  const [isConverting, setIsConverting] = useState(false)
   const fileInputRef = useRef(null)
   const isInitialMount = useRef(true); // Ref to track initial mount
 
@@ -294,43 +297,126 @@ function App() {
     }
   };
 
+  const handleMarkdownToWord = async () => {
+    if (!markdownInput.trim()) {
+      alert('Please enter some markdown content to convert');
+      return;
+    }
+
+    setIsConverting(true);
+
+    try {
+      const response = await fetch('http://192.168.68.85:6201/convert-markdown-to-word', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          markdown: markdownInput,
+          filename: 'markdown-document'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      
+      // Get filename from response headers or use default
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = 'document.docx';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+      
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+    } catch (err) {
+      console.error('Error converting markdown to Word:', err);
+      alert('Error converting markdown to Word. Please try again.');
+    } finally {
+      setIsConverting(false);
+    }
+  };
+
   return (
     <div className="app-layout">
-      <Sidebar
-        isOpen={sidebarOpen}
-        history={history}
-        onSelectHistory={handleSelectHistory}
-        selectedHistoryId={selectedHistoryId}
-        onClearHistory={handleClearHistory}
-        onDeleteHistory={handleDeleteHistory}
-        onClose={() => setSidebarOpen(false)}
-      />
+      {mode === 'pdf-to-md' && (
+        <Sidebar
+          isOpen={sidebarOpen}
+          history={history}
+          onSelectHistory={handleSelectHistory}
+          selectedHistoryId={selectedHistoryId}
+          onClearHistory={handleClearHistory}
+          onDeleteHistory={handleDeleteHistory}
+          onClose={() => setSidebarOpen(false)}
+        />
+      )}
       
-      <div className={`main-content ${sidebarOpen ? 'with-sidebar' : ''}`}>
+      <div className={`main-content ${mode === 'pdf-to-md' && sidebarOpen ? 'with-sidebar' : ''}`}>
         <div className="top-bar">
-          <button 
-            className="sidebar-toggle"
-            onClick={toggleSidebar}
-            title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-            </svg>
-          </button>
+          {mode === 'pdf-to-md' && (
+            <button 
+              className="sidebar-toggle"
+              onClick={toggleSidebar}
+              title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+            </button>
+          )}
           <div className="app-title">
-            <h1>PDF to Markdown Converter</h1>
+            <h1>{mode === 'pdf-to-md' ? 'PDF to Markdown Converter' : 'Markdown to Word Converter'}</h1>
           </div>
-          <button 
-            className="file-select-btn"
-            onClick={() => !isLoading && fileInputRef.current?.click()}
-            disabled={isLoading}
-            title="Select PDF file"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-            </svg>
-            Select File
-          </button>
+          <div className="top-bar-controls">
+            <div className="mode-switcher">
+              <button 
+                className={`mode-btn ${mode === 'pdf-to-md' ? 'active' : ''}`}
+                onClick={() => setMode('pdf-to-md')}
+                title="Convert PDF to Markdown"
+              >
+                PDF → MD
+              </button>
+              <button 
+                className={`mode-btn ${mode === 'md-to-word' ? 'active' : ''}`}
+                onClick={() => setMode('md-to-word')}
+                title="Convert Markdown to Word"
+              >
+                MD → Word
+              </button>
+            </div>
+            {mode === 'pdf-to-md' && (
+              <button 
+                className="file-select-btn"
+                onClick={() => !isLoading && fileInputRef.current?.click()}
+                disabled={isLoading}
+                title="Select PDF file"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                </svg>
+                Select File
+              </button>
+            )}
+          </div>
         </div>
 
         <div 
@@ -350,7 +436,7 @@ function App() {
           />
           
           <div className="app-wrapper">
-            {!markdown && !isLoading && (
+            {mode === 'pdf-to-md' && !markdown && !isLoading && (
               <div className="welcome-content">
                 <div className="welcome-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -359,6 +445,75 @@ function App() {
                 </div>
                 <h2>Drop your PDF anywhere to convert</h2>
                 <p>Drag and drop a PDF file anywhere on this page, or use the "Select File" button in the top right corner</p>
+              </div>
+            )}
+
+            {mode === 'md-to-word' && (
+              <div className="markdown-to-word-container">
+                <div className="markdown-input-section">
+                  <div className="input-header">
+                    <h3>Enter your Markdown content</h3>
+                    <p>Type or paste your Markdown text below and convert it to a Word document</p>
+                  </div>
+                  <textarea
+                    className="markdown-input"
+                    value={markdownInput}
+                    onChange={(e) => setMarkdownInput(e.target.value)}
+                    placeholder="# Your Markdown Here
+
+## Example Content
+
+This is a **bold** text and this is *italic* text.
+
+- Bullet point 1
+- Bullet point 2
+- Bullet point 3
+
+1. Numbered item 1
+2. Numbered item 2
+3. Numbered item 3
+
+```javascript
+// Code block example
+function hello() {
+  console.log('Hello, World!');
+}
+```
+
+> This is a blockquote
+
+Regular paragraph text goes here."
+                    disabled={isConverting}
+                  />
+                  <div className="input-actions">
+                    <button
+                      className={`convert-btn ${isConverting ? 'converting' : ''}`}
+                      onClick={handleMarkdownToWord}
+                      disabled={isConverting || !markdownInput.trim()}
+                    >
+                      {isConverting ? (
+                        <>
+                          <div className="spinner"></div>
+                          Converting...
+                        </>
+                      ) : (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                          </svg>
+                          Download as Word
+                        </>
+                      )}
+                    </button>
+                    <button
+                      className="clear-btn"
+                      onClick={() => setMarkdownInput('')}
+                      disabled={isConverting || !markdownInput.trim()}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -418,7 +573,7 @@ function App() {
               </div>
             )}
 
-            {markdown && !isLoading && (
+            {mode === 'pdf-to-md' && markdown && !isLoading && (
               <div className="markdown-container">
                 <div className="markdown-header">
                   <h3>Converted Markdown</h3>

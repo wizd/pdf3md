@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, send_file
 from flask_cors import CORS
 import pymupdf4llm
 import pymupdf
@@ -12,8 +12,15 @@ from datetime import datetime
 from threading import Thread
 import uuid
 import sys
-from io import StringIO
+from io import StringIO, BytesIO
 import re
+from docx import Document
+from docx.shared import Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
+import markdown
+import html2text
 
 app = Flask(__name__)
 CORS(app)
@@ -214,6 +221,144 @@ def get_progress(conversion_id):
     except Exception as e:
         logger.error(f'Progress error: {str(e)}')
         return jsonify({'error': f'Progress error: {str(e)}'}), 500
+
+def markdown_to_docx(markdown_text, filename="document"):
+    """Convert markdown text to a Word document"""
+    try:
+        # Create a new Document
+        doc = Document()
+        
+        # Split markdown into lines for processing
+        lines = markdown_text.split('\n')
+        i = 0
+        
+        while i < len(lines):
+            line = lines[i].strip()
+            
+            if not line:
+                # Empty line - add paragraph break
+                doc.add_paragraph()
+                i += 1
+                continue
+            
+            # Handle headers
+            if line.startswith('#'):
+                header_level = len(line) - len(line.lstrip('#'))
+                header_text = line.lstrip('# ').strip()
+                
+                if header_level == 1:
+                    heading = doc.add_heading(header_text, level=1)
+                elif header_level == 2:
+                    heading = doc.add_heading(header_text, level=2)
+                elif header_level == 3:
+                    heading = doc.add_heading(header_text, level=3)
+                else:
+                    heading = doc.add_heading(header_text, level=4)
+                
+            # Handle code blocks
+            elif line.startswith('```'):
+                code_lines = []
+                i += 1
+                while i < len(lines) and not lines[i].strip().startswith('```'):
+                    code_lines.append(lines[i])
+                    i += 1
+                
+                # Add code block as a paragraph with monospace font
+                code_text = '\n'.join(code_lines)
+                code_para = doc.add_paragraph()
+                code_run = code_para.add_run(code_text)
+                code_run.font.name = 'Courier New'
+                code_para.style = 'Normal'
+                
+            # Handle bullet points
+            elif line.startswith('- ') or line.startswith('* '):
+                bullet_text = line[2:].strip()
+                doc.add_paragraph(bullet_text, style='List Bullet')
+                
+            # Handle numbered lists
+            elif re.match(r'^\d+\.\s', line):
+                list_text = re.sub(r'^\d+\.\s', '', line)
+                doc.add_paragraph(list_text, style='List Number')
+                
+            # Handle blockquotes
+            elif line.startswith('>'):
+                quote_text = line[1:].strip()
+                quote_para = doc.add_paragraph(quote_text)
+                quote_para.style = 'Quote'
+                
+            # Handle regular paragraphs
+            else:
+                # Process inline formatting
+                para = doc.add_paragraph()
+                
+                # Simple bold and italic processing
+                text = line
+                parts = re.split(r'(\*\*.*?\*\*|\*.*?\*|`.*?`)', text)
+                
+                for part in parts:
+                    if part.startswith('**') and part.endswith('**'):
+                        # Bold text
+                        run = para.add_run(part[2:-2])
+                        run.bold = True
+                    elif part.startswith('*') and part.endswith('*') and not part.startswith('**'):
+                        # Italic text
+                        run = para.add_run(part[1:-1])
+                        run.italic = True
+                    elif part.startswith('`') and part.endswith('`'):
+                        # Inline code
+                        run = para.add_run(part[1:-1])
+                        run.font.name = 'Courier New'
+                    else:
+                        # Regular text
+                        if part:
+                            para.add_run(part)
+            
+            i += 1
+        
+        # Save to BytesIO
+        doc_buffer = BytesIO()
+        doc.save(doc_buffer)
+        doc_buffer.seek(0)
+        
+        return doc_buffer
+        
+    except Exception as e:
+        logger.error(f'Error converting markdown to docx: {str(e)}')
+        raise e
+
+@app.route('/convert-markdown-to-word', methods=['POST'])
+def convert_markdown_to_word():
+    """Convert markdown text to Word document"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'markdown' not in data:
+            return jsonify({'error': 'No markdown content provided'}), 400
+        
+        markdown_text = data['markdown']
+        filename = data.get('filename', 'document')
+        
+        if not markdown_text.strip():
+            return jsonify({'error': 'Markdown content is empty'}), 400
+        
+        # Convert markdown to Word document
+        doc_buffer = markdown_to_docx(markdown_text, filename)
+        
+        # Generate filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        word_filename = f"{filename}_{timestamp}.docx"
+        
+        return send_file(
+            doc_buffer,
+            as_attachment=True,
+            download_name=word_filename,
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+        
+    except Exception as e:
+        logger.error(f'Error in markdown to word conversion: {str(e)}')
+        logger.error(traceback.format_exc())
+        return jsonify({'error': f'Conversion error: {str(e)}'}), 500
 
 if __name__ == '__main__':
     logger.info('Starting Flask server...')
