@@ -376,14 +376,19 @@ function App() {
   }
 
   const handleSelectHistory = (historyItem) => {
+    // Display history item's markdown
     setMarkdown(historyItem.markdown);
     setSelectedHistoryId(historyItem.id);
-    setCurrentFile(null); // Clear current file info
-    setIsLoading(false);  // Ensure loading indicators are off
-    setLoadingProgress(0); // Reset progress display
-    setLoadingStage('');
-    setTotalPages(0);
-    setCurrentPage(0);
+
+    // DO NOT interfere with ongoing uploads.
+    // The main loading indicator's visibility will be controlled
+    // by a combination of `isLoading` and whether `markdown` is set.
+    // setCurrentFile(null); // No longer clearing this, as it's for active upload
+    // setIsLoading(false);  // No longer setting this, to allow uploads to continue
+    // setLoadingProgress(0); 
+    // setLoadingStage('');
+    // setTotalPages(0);
+    // setCurrentPage(0);
     
     // Close sidebar on mobile after selecting an item
     if (isMobile) {
@@ -604,7 +609,8 @@ function App() {
           />
           
           <div className="app-wrapper">
-            {mode === 'pdf-to-md' && !markdown && !isLoading && (
+            {/* Welcome message: Show if not loading, no history markdown selected, and PDF-to-MD mode */}
+            {mode === 'pdf-to-md' && !markdown && !isLoading && fileUploadStates.length === 0 && (
               <div className="welcome-content">
                 <div className="welcome-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -685,7 +691,8 @@ Regular paragraph text goes here."
               </div>
             )}
 
-            {isLoading && (
+            {/* Main loading indicator: Show if actively processing a file AND no history markdown is being viewed */}
+            {isLoading && !markdown && ( 
               <div className="loading-content">
                 <div className="loading-visual">
                   <div className="progress-ring">
@@ -746,8 +753,13 @@ Regular paragraph text goes here."
               </div>
             )}
             
-            {/* Display area for the last successfully converted markdown, if any */}
-            {mode === 'pdf-to-md' && markdown && !isLoading && uploadQueue.length === 0 && (
+            {/* Display area for markdown (from history or a fresh conversion if queue is empty and not loading) */}
+            {mode === 'pdf-to-md' && markdown && (
+              // Condition to show markdown:
+              // - If isLoading is false (meaning no active file processing for the main display)
+              // - OR if isLoading is true, but we are viewing a history item (markdown is set, selectedHistoryId is set)
+              // This allows viewing history while uploads happen in the modal.
+              (!isLoading || (isLoading && selectedHistoryId)) &&
               <div className="markdown-container">
                 <div className="markdown-header">
                   <h3>Converted Markdown</h3>
