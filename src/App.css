@@ -750,12 +750,6 @@ pre {
     color: #718096; /* A bit lighter than default for better contrast on dark */
   }
 
-  .input-header h3 {
-    /* Ensure gradient text is visible on dark mode if it's not already handled */
-    /* If it uses -webkit-text-fill-color: transparent, it should adapt if body text color changes */
-    /* No specific change needed if it's already fine, but good to check */
-  }
-
   .input-header p {
     color: #94a3b8; /* Lighter paragraph text for dark mode */
   }
