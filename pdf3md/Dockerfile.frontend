@@ -25,4 +25,4 @@ ENV PORT=${FRONTEND_PORT:-3000}
 EXPOSE ${PORT}
 
 # Serve the built application
-CMD ["serve", "-s", "dist", "-l", "${PORT}"]
+CMD ["serve", "-s", "dist"]
