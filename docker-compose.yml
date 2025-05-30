@@ -22,7 +22,7 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - pdf3md-network
+      - dokploy-network
 
   frontend:
     build:
@@ -47,8 +47,8 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - pdf3md-network
+      - dokploy-network
 
 networks:
-  pdf3md-network:
-    name: pdf3md-network
+  dokploy-network:
+    external: true
