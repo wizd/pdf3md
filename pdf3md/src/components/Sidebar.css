@@ -180,8 +180,8 @@
 }
 
 .history-item {
-  margin: 0 12px 8px;
-  padding: 16px;
+  margin: 0 10px 6px; /* Slightly reduced margin */
+  padding: 10px 12px; /* Reduced padding */
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(226, 232, 240, 0.6);
   border-radius: 12px;
@@ -228,25 +228,26 @@
 .history-item-header {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 8px; 
+  margin-bottom: 4px; /* Further reduced margin to compact header and preview */
   position: relative;
 }
 
 .file-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  /* display: flex; */ /* No longer needed if only icon is direct child for layout */
+  /* flex-direction: column; */
+  /* align-items: center; */ /* Icon will be aligned by parent flex context */
+  /* gap: 4px; */ 
   flex-shrink: 0;
+  margin-top: 2px; /* Align icon better with text */
 }
 
 .file-icon {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 28px; /* Reduced size */
+  height: 28px; /* Reduced size */
   background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  border-radius: 8px;
+  border-radius: 6px; /* Adjusted border-radius */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -254,8 +255,8 @@
 }
 
 .file-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 16px; /* Reduced size */
+  height: 16px; /* Reduced size */
 }
 
 .file-info {
@@ -263,77 +264,103 @@
   min-width: 0;
 }
 
-.delete-item-btn {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  color: #dc2626;
-  padding: 6px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 1;
-  transform: scale(1);
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-}
-
-.delete-item-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.4);
-  transform: scale(1.05);
-}
-
-.delete-item-btn svg {
-  width: 14px;
-  height: 14px;
-}
+/* .delete-item-btn styles removed as the button is gone from here */
 
 .filename {
   font-weight: 600;
   color: #1e293b;
-  font-size: 0.9rem;
-  margin-bottom: 4px;
+  font-size: 0.9rem; /* Slightly increased for better readability */
+  margin-bottom: 3px; /* Adjusted margin */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 .file-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
+  gap: 5px; /* Adjusted gap */
+  font-size: 0.75rem; /* Unified font size for meta */
   color: #64748b;
+  line-height: 1.2;
+}
+
+.file-meta .file-size,
+.file-meta .page-count {
+  font-size: 0.75rem; /* Ensure consistent size */
 }
 
 .separator {
   color: #cbd5e1;
 }
 
-.history-item-time {
-  font-size: 0.75rem;
-  color: #64748b;
-  margin-bottom: 8px;
-  font-weight: 500;
-}
+/* Old .history-item-time styles removed/will be replaced by .history-item-time-relocated */
 
 .history-item-preview {
-  font-size: 0.8rem;
+  font-size: 0.8rem; 
   color: #64748b;
-  line-height: 1.4;
+  line-height: 1.4; 
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  -webkit-line-clamp: 2; 
+  line-clamp: 2; 
   -webkit-box-orient: vertical;
   overflow: hidden;
   background: rgba(248, 250, 252, 0.6);
-  padding: 8px;
-  border-radius: 6px;
-  border-left: 3px solid rgba(59, 130, 246, 0.3);
+  padding: 8px 10px; 
+  border-radius: 6px; 
+  border-left: 3px solid rgba(59, 130, 246, 0.3); 
+  margin-top: 4px; /* Space after header */
+  margin-bottom: 6px; /* Reduced space before actions row */
+}
+
+.history-item-actions {
+  margin-top: 6px; 
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* Removed diagnostic background */
+  /* padding: 2px !important; */ /* Removed diagnostic padding */
+  min-height: 16px; /* Ensure it has some minimum height for alignment */
+}
+
+.history-item-time-relocated {
+  display: flex;
+  align-items: center;
+  color: #64748b;
+  font-weight: 500;
+  flex-shrink: 0; /* Prevent this group from shrinking if space is tight */
+}
+
+/* .time-icon styles removed as the icon is no longer in JSX */
+
+.history-item-time-relocated span { 
+  font-size: 0.7rem !important; 
+  line-height: 1.1 !important; 
+  color: #64748b !important; 
+  white-space: nowrap; /* Prevent wrapping */
+  display: inline-block !important; /* Ensure it respects line-height */
+}
+
+.delete-text-btn {
+  background: none !important;
+  border: none !important;
+  color: #ef4444 !important; 
+  font-size: 0.7rem !important; 
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  padding: 2px 0 !important; 
+  margin: 0 !important; /* Reset any margin */
+  line-height: 1.1 !important;
+  white-space: nowrap; /* Prevent wrapping */
+  flex-shrink: 0; /* Prevent shrinking */
+  display: inline-block !important;
+  transition: color 0.2s ease;
+}
+
+.delete-text-btn:hover {
+  color: #dc2626; /* Darker red on hover */
+  text-decoration: underline;
 }
 
 .empty-state {
@@ -422,13 +449,28 @@
   }
 
   .file-meta,
-  .history-item-time,
-  .history-item-preview {
+  .file-meta .file-size,
+  .file-meta .page-count,
+  .history-item-preview { /* Time related elements styled separately for dark mode now */
     color: #94a3b8;
   }
+  
+  .history-item-time-relocated,
+  .history-item-time-relocated span { /* Dark mode for time text */
+    color: #94a3b8 !important;
+  }
 
+  /* Dark mode .time-icon styles removed */
+  
   .history-item-preview {
     background: rgba(15, 23, 42, 0.6);
+  }
+
+  .delete-text-btn {
+    color: #f87171; /* Lighter red for dark mode */
+  }
+  .delete-text-btn:hover {
+    color: #ef4444; 
   }
 
   .empty-state p {

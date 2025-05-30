@@ -100,15 +100,7 @@ const Sidebar = ({ isOpen, history, onSelectHistory, selectedHistoryId, onClearH
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                   </svg>
                 </div>
-                <button 
-                  className="delete-item-btn"
-                  onClick={(e) => handleDeleteItem(e, item.id)}
-                  title="Delete this conversion"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                {/* Delete button removed from here */}
               </div>
               <div className="file-info">
                 <div className="filename" title={item.filename}>{item.filename}</div>
@@ -123,11 +115,22 @@ const Sidebar = ({ isOpen, history, onSelectHistory, selectedHistoryId, onClearH
                 </div>
               </div>
             </div>
-            <div className="history-item-time">
-              {formatRelativeTime(item.timestamp)}
-            </div>
+            {/* Time element removed from here */}
             <div className="history-item-preview">
               {item.markdown.substring(0, 120)}...
+            </div>
+            <div className="history-item-actions">
+              <div className="history-item-time-relocated">
+                {/* SVG clock icon removed */}
+                <span>{formatRelativeTime(item.timestamp)}</span>
+              </div>
+              <button
+                className="delete-text-btn"
+                onClick={(e) => handleDeleteItem(e, item.id)}
+                title="Delete this conversion"
+              >
+                Delete
+              </button>
             </div>
           </div>
         ))}
