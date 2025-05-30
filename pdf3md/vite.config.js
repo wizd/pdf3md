@@ -3,7 +3,22 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'log-all-requests',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          console.log(`[Vite Server Request Pre-Proxy]: ${req.method} ${req.url}`);
+          // Check if the request URL might be handled by SPA fallback too early
+          if (req.url === '/convert' && req.headers.accept && req.headers.accept.includes('text/html')) {
+            console.warn(`[Vite Server Warning]: Request for '/convert' is asking for HTML. This might trigger SPA fallback before proxy.`);
+          }
+          next();
+        });
+      },
+    }
+  ],
   server: {
     proxy: {
       // Proxy API requests to the backend server
@@ -14,22 +29,21 @@ export default defineConfig({
         logLevel: 'debug',
         configure: (proxy, options) => {
           proxy.on('error', (err, req, res) => {
-            console.error('Proxy error:', err);
+            console.error('[HPM] Proxy error:', err);
             if (res && typeof res.writeHead === 'function') {
               res.writeHead(500, {
                 'Content-Type': 'text/plain',
               });
               res.end('Something went wrong with the proxy. ' + err.message);
             } else if (res && typeof res.end === 'function') {
-              // If res.writeHead is not available (e.g. in some error scenarios)
-              res.end('Proxy error: ' + err.message);
+              res.end('[HPM] Proxy error: ' + err.message);
             }
           });
           proxy.on('proxyReq', (proxyReq, req, res) => {
-            console.log(`[HPM] Proxying request: ${req.method} ${req.url} -> ${options.target.href}${proxyReq.path}`);
+            console.log(`[HPM] Proxying request: ${req.method} ${req.originalUrl} -> ${options.target.href}${proxyReq.path}`);
           });
           proxy.on('proxyRes', (proxyRes, req, res) => {
-            console.log(`[HPM] Received response from target: ${proxyRes.statusCode} ${req.url}`);
+            console.log(`[HPM] Received response from target: ${proxyRes.statusCode} ${req.originalUrl}`);
           });
         },
       },
