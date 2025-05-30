@@ -10,18 +10,26 @@ export default defineConfig({
       '/convert': {
         target: 'http://backend:6201',
         changeOrigin: true,
+        secure: false,
+        logLevel: 'debug',
       },
       '/progress': {
         target: 'http://backend:6201',
         changeOrigin: true,
+        secure: false,
+        logLevel: 'debug',
       },
       '/convert-word-to-markdown': {
         target: 'http://backend:6201',
         changeOrigin: true,
+        secure: false,
+        logLevel: 'debug',
       },
       '/convert-markdown-to-word': {
         target: 'http://backend:6201',
         changeOrigin: true,
+        secure: false,
+        logLevel: 'debug',
       },
     },
     host: '0.0.0.0', // Allow external access
