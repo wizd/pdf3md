@@ -98,6 +98,27 @@ app.get('*', (req, res) => {
     res.sendFile(indexPath);
 });
 
+// Global Express error handler
+app.use((err, req, res, next) => {
+    console.error('--- GLOBAL EXPRESS ERROR HANDLER CAUGHT AN ERROR ---');
+    console.error('Timestamp:', new Date().toISOString());
+    console.error('Route:', req.method, req.originalUrl);
+    console.error('Error Message:', err.message);
+    console.error('Error Code:', err.code); // May not always be present
+    console.error('Error Stack:', err.stack);
+    process.stderr.write(`Global Express Error: Message - ${err.message}, Code - ${err.code || 'N/A'}\n`);
+
+    if (res.headersSent) {
+        console.error('Global handler: Headers already sent. Delegating to default Express error handler.');
+        return next(err);
+    }
+    res.status(err.status || 500).json({
+        message: 'Global error handler: An unexpected error occurred on the server. Check server logs.',
+        errorDetail: err.message,
+        errorCode: err.code
+    });
+});
+
 app.listen(port, '0.0.0.0', () => {
     console.log(`Frontend server is live on http://0.0.0.0:${port}`);
     console.log('Proxying API requests:');
