@@ -21,10 +21,15 @@ const apiRoutes = [
 
 // Setup proxy middleware for each API route
 apiRoutes.forEach(route => {
+    console.log(`[PROXY SETUP] Attempting to register proxy for route: "${route}"`); // Diagnostic log
+    if (typeof route !== 'string' || route.includes(':')) { // Additional check
+        console.error(`[PROXY SETUP ERROR] Invalid route detected: "${route}". Skipping.`);
+        return;
+    }
     app.use(route, createProxyMiddleware({
         target: backendServiceUrl,
         changeOrigin: true, // Important for virtual hosted sites
-        logLevel: 'debug', // Enable for troubleshooting proxy issues
+        // logLevel: 'debug', // Temporarily comment out for debugging
         onError: (err, req, res) => {
             console.error('Proxy error:', err);
             if (!res.headersSent) {
