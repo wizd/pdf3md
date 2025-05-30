@@ -222,6 +222,46 @@ The application is designed with the following network assumptions when using th
 *   **Local Area Network (LAN) Access:** If you access the frontend from another device on your LAN (e.g., `http://<host-ip-address>:3000`), the frontend will attempt to connect to the backend at `http://<host-ip-address>:6201`. This requires the host machine's firewall to allow incoming connections on port `6201` from other devices on the LAN.
 *   **Limitations:** This setup assumes the backend API is always reachable on the same hostname as the frontend, but on port `6201`. For more complex deployment scenarios (e.g., different domains/subdomains for frontend and backend, or API gateways), further configuration, potentially involving environment variables for the API base URL in the frontend build, would be necessary. The current Docker setup is primarily optimized for local development and straightforward LAN access.
 
+### Using a Reverse Proxy
+
+If you plan to put PDF3MD behind a reverse proxy (e.g., Nginx, Apache, Caddy, Traefik), you need to ensure that requests to your chosen domain are correctly routed to the frontend and backend services.
+
+The frontend application is designed to detect if it's being accessed via a domain name. If so, it will make API requests to the `/api` path on that same domain. Your reverse proxy must be configured to route these `/api/...` requests to the backend service (running on port `6201` by default).
+
+**Example Nginx Configuration:**
+
+Assuming your reverse proxy listens on `http://pdf2md.local/` (or your chosen domain):
+
+1.  **Route `/` to the frontend service** (running on port `3000` by default).
+2.  **Route `/api/` to the backend service** (running on port `6201` by default).
+
+Here's a sample Nginx `location` block for routing the API:
+
+```nginx
+location /api/ {
+    proxy_pass http://<BACKEND_IP_OR_HOSTNAME>:6201/; # Replace with your backend's actual IP/hostname if not localhost from proxy's perspective
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # Important: Ensure trailing slashes are correct.
+    # If proxy_pass has a URI (like / at the end), the part of the original request
+    # that matches the location block is replaced by this URI.
+    # If proxy_pass has no URI, the full original request URI is passed.
+}
+```
+
+**Key considerations for your reverse proxy setup:**
+
+*   **Frontend Root:** Your reverse proxy should serve the frontend application (from port `3000`) at the root of your domain (e.g., `http://pdf2md.local/`).
+*   **API Path:** The frontend will make requests to `http://pdf2md.local/api/...`. Your proxy needs to strip `/api` from the path before forwarding to the backend if the backend doesn't expect `/api` in its routes (which is the case for PDF3MD by default). The `proxy_pass http://<backend_host>:6201/;` (with a trailing slash) typically handles this correctly in Nginx.
+*   **WebSocket Support:** Not currently used by PDF3MD, but if future features require WebSockets, ensure your proxy is configured to handle them.
+*   **SSL/TLS Termination:** It's highly recommended to configure SSL/TLS termination at your reverse proxy.
+*   **CORS:** The backend is configured with permissive CORS headers (`Access-Control-Allow-Origin: *`). In most reverse proxy setups where the frontend and API are served under the same domain, CORS issues should not arise. However, if you encounter them, ensure your proxy isn't stripping or altering necessary CORS headers.
+
+Adjust the `proxy_pass` directive to point to the correct address of your backend container as seen by the reverse proxy (e.g., `http://localhost:6201` if on the same machine, or `http://pdf3md-backend:6201` if using Docker service names in a shared Docker network).
+
 ## Troubleshooting
 
 -   **Port Conflicts**: Ensure ports `3000`, `5173` (for dev), and `6201` are not in use by other applications. Use `docker compose down` to stop existing PDF3MD containers.

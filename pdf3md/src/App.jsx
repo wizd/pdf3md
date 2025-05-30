@@ -138,15 +138,21 @@ function App() {
 
   // Helper function to get the backend URL
   const getBackendUrl = () => {
-    // In development, use the proxy configured in vite.config.js
-    if (import.meta.env.DEV) {
-      return '';
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+
+    if (hostname === 'localhost') {
+      // Scenario 1: Localhost development (e.g., http://localhost:3000)
+      return 'http://localhost:6201';
+    } else if (hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+      // Scenario 2: Direct IP access (e.g., http://192.168.X.Y:3000)
+      // Backend is on the same IP, but port 6201
+      return `${protocol}//${hostname}:6201`;
+    } else {
+      // Scenario 3: Domain name access (e.g., http://pdf2md.local/)
+      // Assumes reverse proxy routes /api to the backend on port 6201
+      return `${protocol}//${hostname}/api`;
     }
-    
-    // In production, use the backend container name or HOST_DOMAIN if available
-    return window.location.hostname === 'localhost' 
-      ? 'http://localhost:6201' 
-      : `http://${window.location.hostname}:6201`;
   };
 
   const pollProgress = async (conversionId, fileName) => {

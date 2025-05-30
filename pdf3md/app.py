@@ -24,7 +24,8 @@ default_origins = [
     "http://localhost:5173",    # Vite dev server default
     "http://localhost:3000",    # Production frontend port in Docker
     "http://127.0.0.1:5173",
-    "http://127.0.0.1:3000"
+    "http://127.0.0.1:3000",
+    "*"  # Allow all origins for local hosting (permissive for local use)
 ]
 
 # Get additional origins from environment variable
@@ -62,15 +63,23 @@ logger = logging.getLogger(__name__)
 
 logger.info(f"Initializing CORS with origins: {final_origins}") # Log the origins
 
-# Apply CORS with more permissive settings
+# Apply CORS with very permissive settings for local hosting
 CORS(
     app,
-    resources={r"/*": {"origins": final_origins}},  # Apply to all routes
-    supports_credentials=True,
-    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Explicitly list allowed methods
-    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Origin", "Accept"],  # Common and CORS-related headers
-    expose_headers=["Content-Disposition"]  # Expose Content-Disposition for file downloads
+    origins="*",  # Allow all origins
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Origin", "Accept"],
+    supports_credentials=False
 )
+
+# Add manual CORS headers as backup
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Origin,Accept')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Expose-Headers', 'Content-Disposition')
+    return response
 
 # Store conversion progress
 conversion_progress = {}
