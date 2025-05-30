@@ -1,6 +1,8 @@
 services:
   backend:
-    image: docker.io/learnedmachine/pdf3md-backend:latest 
+    build:
+      context: ./pdf3md
+      dockerfile: Dockerfile.backend
     container_name: pdf3md-backend
     ports:
       - "6201:6201"
@@ -19,19 +21,23 @@ services:
       start_period: 40s
 
   frontend:
-    image: docker.io/learnedmachine/pdf3md-frontend:latest 
+    build:
+      context: ./pdf3md
+      dockerfile: Dockerfile.frontend
+      args:
+        FRONTEND_PORT: ${FRONTEND_PORT:-6202}
     container_name: pdf3md-frontend
     ports:
-      - "6202:6202"
+      - "${FRONTEND_PORT:-6202}:${FRONTEND_PORT:-6202}"
     expose:
-      - "6202"
-    environment: 
+      - "${FRONTEND_PORT:-6202}"
+    environment:
       FRONTEND_PORT: ${FRONTEND_PORT:-6202}
     depends_on:
       - backend
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6202/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${FRONTEND_PORT:-6202}/"]
       interval: 30s
       timeout: 10s
       retries: 3

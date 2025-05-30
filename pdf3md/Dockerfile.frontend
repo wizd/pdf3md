@@ -18,8 +18,11 @@ RUN npm run build
 # Install a simple HTTP server to serve the built files
 RUN npm install -g serve
 
+ARG FRONTEND_PORT
+ENV PORT=${FRONTEND_PORT:-3000}
+
 # Expose port
-EXPOSE 3000
+EXPOSE ${PORT}
 
 # Serve the built application
-CMD ["serve", "-s", "dist", "-l", "3000"]
+CMD ["serve", "-s", "dist", "-l", "${PORT}"]
