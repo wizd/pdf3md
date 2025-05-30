@@ -146,7 +146,7 @@ function App() {
     // In production, use the backend container name or HOST_DOMAIN if available
     return window.location.hostname === 'localhost' 
       ? 'http://localhost:6201' 
-      : `http://${window.location.hostname}:6201`;
+      : `https://${window.location.hostname}`;
   };
 
   const pollProgress = async (conversionId, fileName) => {
