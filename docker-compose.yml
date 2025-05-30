@@ -32,7 +32,7 @@ services:
     ports:
       - "${FRONTEND_PORT:-6202}:${FRONTEND_PORT:-6202}"
     expose:
-      - "${FRONTEND_PORT:-6202}"
+      - "6202"
     environment:
       FRONTEND_PORT: ${FRONTEND_PORT:-6202}
     depends_on:
