@@ -19,29 +19,58 @@ import traceback
 
 app = Flask(__name__)
 
-# Simple CORS origins configuration
-allowed_origins = [
-    "http://localhost:5173",    # Vite dev server
-    "http://localhost:3000",    # Production frontend
+# Default CORS origins for local development
+default_origins = [
+    "http://localhost:5173",    # Vite dev server default
+    "http://localhost:3000",    # Production frontend port in Docker
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3000"
 ]
 
-# Add custom origins from environment variable
-custom_origins = os.environ.get('ALLOWED_CORS_ORIGINS')
-if custom_origins:
-    # Split comma-separated origins and add them
-    additional_origins = [origin.strip() for origin in custom_origins.split(',') if origin.strip()]
-    allowed_origins.extend(additional_origins)
+# Get additional origins from environment variable
+additional_origins_str = os.environ.get('ALLOWED_CORS_ORIGINS')
+all_allowed_origins = list(default_origins) # Start with a copy of defaults
+
+if additional_origins_str:
+    # Split the comma-separated string and strip whitespace from each origin
+    custom_origins = [origin.strip() for origin in additional_origins_str.split(',')]
+    
+    # For each base domain, add variations with common ports
+    expanded_origins = []
+    for origin in custom_origins:
+        expanded_origins.append(origin)  # Add the base domain
+        
+        # Extract the domain without protocol
+        domain_match = re.match(r'(https?://)?(.*)', origin)
+        if domain_match:
+            protocol = domain_match.group(1) or 'http://'  # Default to http:// if no protocol
+            domain = domain_match.group(2)
+            
+            # Add common port variations
+            expanded_origins.append(f"{protocol}{domain}:3000")  # Production frontend
+            expanded_origins.append(f"{protocol}{domain}:5173")  # Dev frontend
+            expanded_origins.append(f"{protocol}{domain}:6201")  # Backend
+    
+    all_allowed_origins.extend(expanded_origins)
+
+# Remove duplicates by converting to a set and back to a list
+final_origins = list(set(all_allowed_origins))
 
 # Set up logging (ensure logger is configured before use, especially for the CORS log line)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-logger.info(f"Initializing CORS with origins: {allowed_origins}")
+logger.info(f"Initializing CORS with origins: {final_origins}") # Log the origins
 
-# Simple CORS configuration
-CORS(app, origins=allowed_origins)
+# Apply CORS with more permissive settings
+CORS(
+    app,
+    resources={r"/*": {"origins": final_origins}},  # Apply to all routes
+    supports_credentials=True,
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Explicitly list allowed methods
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Origin", "Accept"],  # Common and CORS-related headers
+    expose_headers=["Content-Disposition"]  # Expose Content-Disposition for file downloads
+)
 
 # Store conversion progress
 conversion_progress = {}

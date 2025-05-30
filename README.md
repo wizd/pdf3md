@@ -97,8 +97,6 @@ This method uses pre-built Docker images from Docker Hub for quick setup. You'll
     This will pull the latest images from Docker Hub and start the application.
     -   Access Frontend: `http://localhost:3000`
     -   Access Backend API: `http://localhost:6201`
-    
-
 
 3.  **Start in Development Mode** (with hot-reloading):
     ```bash
@@ -109,13 +107,12 @@ This method uses pre-built Docker images from Docker Hub for quick setup. You'll
     -   Access Backend API: `http://localhost:6201`
     
 
-
 4.  **Other Useful Script Commands**:
     ```bash
     ./docker-start.sh stop                  # Stop all services
     ./docker-start.sh status                # Check running services
     ./docker-start.sh logs                  # View logs from services
-    ./docker-start.sh rebuild dev           # Rebuild development 
+    ./docker-start.sh rebuild dev example.com  # Rebuild development with custom domain
     ./docker-start.sh help                  # Display all available script commands
     ```
 
@@ -123,10 +120,10 @@ This method uses pre-built Docker images from Docker Hub for quick setup. You'll
 
 If you prefer to use Docker Compose commands directly with the pre-built images without the `docker-start.sh` script:
 
-#### Production Deployment
+#### Direct Deployment
 
 1.  **Create `docker-compose.yml`**:
-    *   Create a directory for your application (e.g., `mkdir pdf3md-prod && cd pdf3md-prod`).
+    *   Create a directory for your application (e.g., `mkdir pdf3md && cd pdf3md`).
     *   Create a file named `docker-compose.yml` in this directory and paste the content provided in the section above (under "Using Pre-built Docker Images (Recommended)").
 
 2.  **Pull and Start Services**:
@@ -135,9 +132,10 @@ If you prefer to use Docker Compose commands directly with the pre-built images 
     docker compose pull # Pulls the latest images specified in docker-compose.yml
     docker compose up -d
     ```
-    
+
 3.  **Access Application**: 
-    - Frontend at `http://localhost:3000`, Backend API at `http://localhost:6201`
+    - With default settings: Frontend at `http://localhost:3000`, Backend API at `http://localhost:6201`
+    - With custom domain: Frontend at `http://example.com:3000`, Backend API at `http://example.com:6201`
 4.  **Stop Services**:
     ```bash
     docker compose down
@@ -156,10 +154,10 @@ This setup is for developing the application locally, not using pre-built images
     Use the `docker-compose.dev.yml` file, which is typically configured to build images locally and mount source code.
     ```bash
     docker compose -f docker-compose.dev.yml up --build
-    ```
-    
+    ``` 
 3.  **Access Application**: 
-    - Frontend (Vite) at `http://localhost:5173`, Backend API at `http://localhost:6201`
+    - With default settings: Frontend (Vite) at `http://localhost:5173`, Backend API at `http://localhost:6201`
+    - With custom domain/IP: Frontend at `http://192.168.1.100:5173`, Backend API at `http://192.168.1.100:6201`
 4.  **Stop Services**:
     ```bash
     docker compose -f docker-compose.dev.yml down
