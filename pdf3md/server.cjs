@@ -43,6 +43,9 @@ app.use('/convert', (req, res, next) => {
 const convertProxyOptions = {
     target: backendServiceUrl,
     changeOrigin: true,
+    pathRewrite: {
+        '^/convert': '/convert'  // 确保路径正确转发到后端
+    },
     onProxyReq: (proxyReq, req, res) => {
         const targetPath = `${proxyReq.protocol}//${proxyReq.host}${proxyReq.path}`;
         const logMessage = `[HPM Event onProxyReq for /convert] Original: ${req.method} ${req.originalUrl} ---> Target: ${proxyReq.method} ${targetPath}`;
@@ -91,6 +94,9 @@ remainingApiRoutes.forEach(route => {
     const generalProxyOptions = {
         target: backendServiceUrl,
         changeOrigin: true,
+        pathRewrite: {
+            [`^${route}`]: route  // 确保路径正确转发到后端
+        },
         onProxyReq: (proxyReq, req, res) => {
             const targetPath = `${proxyReq.protocol}//${proxyReq.host}${proxyReq.path}`;
             const logMessage = `[HPM Event onProxyReq for ${route}] Original: ${req.method} ${req.originalUrl} ---> Target: ${proxyReq.method} ${targetPath}`;
