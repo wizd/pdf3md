@@ -12,6 +12,26 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         logLevel: 'debug',
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.error('Proxy error:', err);
+            if (res && typeof res.writeHead === 'function') {
+              res.writeHead(500, {
+                'Content-Type': 'text/plain',
+              });
+              res.end('Something went wrong with the proxy. ' + err.message);
+            } else if (res && typeof res.end === 'function') {
+              // If res.writeHead is not available (e.g. in some error scenarios)
+              res.end('Proxy error: ' + err.message);
+            }
+          });
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log(`[HPM] Proxying request: ${req.method} ${req.url} -> ${options.target.href}${proxyReq.path}`);
+          });
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log(`[HPM] Received response from target: ${proxyRes.statusCode} ${req.url}`);
+          });
+        },
       },
       '/progress': {
         target: 'http://backend:6201',
