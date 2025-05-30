@@ -37,32 +37,28 @@ app.use('/convert', (req, res, next) => {
     console.log(`[CUSTOM LOGGER FOR /convert] Request received: ${req.method} ${req.originalUrl} at ${new Date().toISOString()}`);
     process.stdout.write('[CUSTOM LOGGER FOR /convert] Request reached here (stdout)\n');
 
-    // Direct backend connectivity test
-    const backendTestUrl = `${backendServiceUrl}/convert`; // Assuming /convert is a valid GET endpoint on backend for testing
-    console.log(`[BACKEND TEST] Attempting direct GET to: ${backendTestUrl}`);
-    const backendRequest = http.get(backendTestUrl, (backendRes) => {
-        let data = '';
-        console.log(`[BACKEND TEST] STATUS: ${backendRes.statusCode}`);
-        console.log(`[BACKEND TEST] HEADERS: ${JSON.stringify(backendRes.headers)}`);
-        backendRes.on('data', (chunk) => { data += chunk; });
-        backendRes.on('end', () => {
-            console.log('[BACKEND TEST] Successfully connected to backend. Response length:', data.length);
-            // next(); // Proceed only if test is successful, or remove test for production
-        });
-    }).on('error', (e) => {
-        console.error(`[BACKEND TEST] ERROR connecting to backend: ${e.message}`);
-        console.error(`[BACKEND TEST] Error Code: ${e.code}`);
-        console.error('[BACKEND TEST] Error Stack:', e.stack);
-        // Do not call next() if backend test fails, or handle error appropriately
-        // Potentially send an immediate error response to client if this test is critical
-        // For now, we will still call next() to let HPM try, but we have logged the failure.
-    });
-    backendRequest.setTimeout(5000, () => { // 5 second timeout for the test
-        console.error('[BACKEND TEST] Timeout connecting to backend.');
-        backendRequest.destroy(); // or backendRequest.abort() in newer Node versions
-    });
+    // // Direct backend connectivity test (Temporarily commented out for focused HPM debugging)
+    // const backendTestUrl = `${backendServiceUrl}/convert`;
+    // console.log(`[BACKEND TEST] Attempting direct GET to: ${backendTestUrl}`);
+    // const backendRequest = http.get(backendTestUrl, (backendRes) => {
+    //     let data = '';
+    //     console.log(`[BACKEND TEST] STATUS: ${backendRes.statusCode}`);
+    //     console.log(`[BACKEND TEST] HEADERS: ${JSON.stringify(backendRes.headers)}`);
+    //     backendRes.on('data', (chunk) => { data += chunk; });
+    //     backendRes.on('end', () => {
+    //         console.log('[BACKEND TEST] Successfully connected to backend. Response length:', data.length);
+    //     });
+    // }).on('error', (e) => {
+    //     console.error(`[BACKEND TEST] ERROR connecting to backend: ${e.message}`);
+    //     console.error(`[BACKEND TEST] Error Code: ${e.code}`);
+    //     console.error('[BACKEND TEST] Error Stack:', e.stack);
+    // });
+    // backendRequest.setTimeout(5000, () => {
+    //     console.error('[BACKEND TEST] Timeout connecting to backend.');
+    //     backendRequest.destroy();
+    // });
 
-    next(); // Call next() immediately for now to allow HPM to proceed regardless of test outcome
+    next(); // Call next() to allow HPM to proceed
 });
 
 // API routes that need to be proxied to the backend
