@@ -144,7 +144,11 @@ function App() {
         return;
       }
       try {
+<<<<<<< HEAD
         const response = await fetch(`http://192.168.68.85:6201/progress/${conversionId}`);
+=======
+        const response = await fetch(`http://${window.location.hostname}:6201/progress/${conversionId}`);
+>>>>>>> main
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
         const progressData = await response.json();
@@ -249,7 +253,11 @@ function App() {
     formData.append('pdf', file);
 
     try {
+<<<<<<< HEAD
       const response = await fetch('http://192.168.68.85:6201/convert', {
+=======
+      const response = await fetch(`http://${window.location.hostname}:6201/convert`, {
+>>>>>>> main
         method: 'POST',
         body: formData,
       });
@@ -457,7 +465,11 @@ function App() {
     setIsConverting(true);
 
     try {
+<<<<<<< HEAD
       const response = await fetch('http://192.168.68.85:6201/convert-markdown-to-word', {
+=======
+      const response = await fetch(`http://${window.location.hostname}:6201/convert-markdown-to-word`, {
+>>>>>>> main
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -545,7 +557,11 @@ function App() {
             </button>
           )}
           <div className="app-title">
+<<<<<<< HEAD
             <h1>{mode === 'pdf-to-md' ? 'PDF to Markdown Converter' : 'Markdown to Word Converter'}</h1>
+=======
+            <h1>{mode === 'pdf-to-md' ? 'PDF to Markdown Converterer' : 'Markdown to Word Converter'}</h1>
+>>>>>>> main
           </div>
           <div className="top-bar-controls">
             {mode === 'pdf-to-md' && (
