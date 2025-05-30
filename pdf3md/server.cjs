@@ -29,7 +29,7 @@ apiRoutes.forEach(route => {
     app.use(route, createProxyMiddleware({
         target: backendServiceUrl,
         changeOrigin: true, // Important for virtual hosted sites
-        // logLevel: 'debug', // Temporarily comment out for debugging
+        logLevel: 'debug', // Enable for more proxy diagnostics
         onError: (err, req, res) => {
             console.error('Proxy error:', err);
             if (!res.headersSent) {
