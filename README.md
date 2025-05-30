@@ -230,7 +230,7 @@ The frontend application is designed to detect if it's being accessed via a doma
 
 **Example Nginx Configuration:**
 
-Assuming your reverse proxy listens on `http://pdf2md.local/` (or your chosen domain):
+Assuming your reverse proxy listens on `http://pdf3md.local/` (or your chosen domain):
 
 1.  **Route `/` to the frontend service** (running on port `3000` by default).
 2.  **Route `/api/` to the backend service** (running on port `6201` by default).
@@ -254,8 +254,8 @@ location /api/ {
 
 **Key considerations for your reverse proxy setup:**
 
-*   **Frontend Root:** Your reverse proxy should serve the frontend application (from port `3000`) at the root of your domain (e.g., `http://pdf2md.local/`).
-*   **API Path:** The frontend will make requests to `http://pdf2md.local/api/...`. Your proxy needs to strip `/api` from the path before forwarding to the backend if the backend doesn't expect `/api` in its routes (which is the case for PDF3MD by default). The `proxy_pass http://<backend_host>:6201/;` (with a trailing slash) typically handles this correctly in Nginx.
+*   **Frontend Root:** Your reverse proxy should serve the frontend application (from port `3000`) at the root of your domain (e.g., `http://pdf3md.local/`).
+*   **API Path:** The frontend will make requests to `http://pdf3md.local/api/...`. Your proxy needs to strip `/api` from the path before forwarding to the backend if the backend doesn't expect `/api` in its routes (which is the case for PDF3MD by default). The `proxy_pass http://<backend_host>:6201/;` (with a trailing slash) typically handles this correctly in Nginx.
 *   **WebSocket Support:** Not currently used by PDF3MD, but if future features require WebSockets, ensure your proxy is configured to handle them.
 *   **SSL/TLS Termination:** It's highly recommended to configure SSL/TLS termination at your reverse proxy.
 *   **CORS:** The backend is configured with permissive CORS headers (`Access-Control-Allow-Origin: *`). In most reverse proxy setups where the frontend and API are served under the same domain, CORS issues should not arise. However, if you encounter them, ensure your proxy isn't stripping or altering necessary CORS headers.
