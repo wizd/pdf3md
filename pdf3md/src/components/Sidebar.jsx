@@ -114,8 +114,12 @@ const Sidebar = ({ isOpen, history, onSelectHistory, selectedHistoryId, onClearH
                 <div className="filename" title={item.filename}>{item.filename}</div>
                 <div className="file-meta">
                   <span className="file-size">{item.fileSize}</span>
-                  <span className="separator">•</span>
-                  <span className="page-count">{item.pageCount} pages</span>
+                  {item.pageCount && (
+                    <>
+                      <span className="separator">•</span>
+                      <span className="page-count">{item.pageCount} pages</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

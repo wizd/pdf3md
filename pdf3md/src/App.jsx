@@ -225,9 +225,12 @@ function App() {
   const processFile = async (file) => {
     if (!file) return;
 
-    if (!file.type.includes('pdf')) {
-      alert(`Skipping non-PDF file: ${file.name}`);
-      updateFileStatus(file.name, { status: 'Skipped', error: 'Not a PDF' });
+    const isPdf = file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf');
+    const isDocx = file.type.includes('vnd.openxmlformats-officedocument.wordprocessingml.document') || file.name.toLowerCase().endsWith('.docx');
+
+    if (!isPdf && !isDocx) {
+      alert(`Skipping unsupported file: ${file.name}. Only PDF and DOCX files are supported.`);
+      updateFileStatus(file.name, { status: 'Skipped', error: 'Unsupported file type' });
       // Process next file if any
       if (uploadQueue.length > 0) {
         const nextFile = uploadQueue[0];
@@ -246,10 +249,21 @@ function App() {
     updateFileStatus(file.name, { status: 'Uploading', progress: 0, stage: 'Uploading file...' });
 
     const formData = new FormData();
-    formData.append('pdf', file);
+    let endpoint = '';
+    let fileKey = '';
+
+    if (isPdf) {
+      formData.append('pdf', file);
+      endpoint = `http://${window.location.hostname}:6201/convert`;
+      fileKey = 'pdf';
+    } else if (isDocx) {
+      formData.append('document', file);
+      endpoint = `http://${window.location.hostname}:6201/convert-word-to-markdown`;
+      fileKey = 'document';
+    }
 
     try {
-      const response = await fetch(`http://${window.location.hostname}:6201/convert`, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         body: formData,
       });
@@ -257,23 +271,44 @@ function App() {
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       
       const data = await response.json();
-      if (data.success && data.conversion_id) {
-        updateFileStatus(file.name, { status: 'Processing', stage: 'Waiting for conversion...' });
-        pollProgress(data.conversion_id, file.name);
-      } else {
-        throw new Error(data.error || 'Conversion failed to start');
+
+      if (isPdf) {
+        if (data.success && data.conversion_id) {
+          updateFileStatus(file.name, { status: 'Processing', stage: 'Waiting for conversion...' });
+          pollProgress(data.conversion_id, file.name);
+        } else {
+          throw new Error(data.error || 'PDF conversion failed to start');
+        }
+      } else if (isDocx) {
+        // DOCX conversion is synchronous
+        if (data.success && data.markdown) {
+          setMarkdown(data.markdown); // Display the markdown
+          addToHistory(data); // Add to history (data should match history item structure)
+          updateFileStatus(file.name, { status: 'Completed', markdown: data.markdown, progress: 100, stage: 'Completed' });
+          setIsLoading(false);
+          setCurrentFile(null);
+          // Reset progress/stage/page counts if queue is empty or if it was a DOCX file
+          if (uploadQueue.length === 0 || isDocx) { 
+            setLoadingProgress(0);
+            setLoadingStage('');
+            setTotalPages(0); 
+            setCurrentPage(0);
+          }
+        } else {
+          throw new Error(data.error || 'Word to Markdown conversion failed');
+        }
       }
     } catch (err) {
-      console.error(err);
-      alert(`Error starting PDF conversion for ${file.name}. Please try again.`);
-      updateFileStatus(file.name, { status: 'Error', error: err.message || 'Failed to start conversion' });
+      console.error(`Error during ${isPdf ? 'PDF' : 'Word'} conversion for ${file.name}:`, err);
+      alert(`Error starting ${isPdf ? 'PDF' : 'Word'} conversion for ${file.name}. Please try again.`);
+      updateFileStatus(file.name, { status: 'Error', error: err.message || `Failed to start ${isPdf ? 'PDF' : 'Word'} conversion` });
       setIsLoading(false); // Allow next file in queue to process
       setCurrentFile(null);
        if (uploadQueue.length === 0) { // Reset global progress if queue is empty
         setLoadingProgress(0);
         setLoadingStage('');
-        setTotalPages(0);
-        setCurrentPage(0);
+        setTotalPages(0); // Ensure totalPages is reset for non-PDFs or errors
+        setCurrentPage(0); // Ensure currentPage is reset
       }
     }
   };
@@ -282,22 +317,27 @@ function App() {
     if (selectedFiles.length === 0) return;
 
     const newFileEntries = Array.from(selectedFiles)
-      .filter(file => file.type.includes('pdf')) // Filter for PDFs upfront
+      .filter(file => {
+        const isPdf = file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf');
+        const isDocx = file.type.includes('vnd.openxmlformats-officedocument.wordprocessingml.document') || file.name.toLowerCase().endsWith('.docx');
+        return isPdf || isDocx;
+      })
       .map(file => ({
         name: file.name,
         size: file.size,
+        type: file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'docx', // Store type
         status: 'Queued', // Initial status
         progress: 0,
         stage: 'Queued',
-        totalPages: 0,
-        currentPage: 0,
+        totalPages: 0, // Will be updated by PDF polling
+        currentPage: 0, // Will be updated by PDF polling
         markdown: null,
         error: null,
         originalFile: file // Keep original file object for processing
       }));
 
     if (newFileEntries.length === 0 && selectedFiles.length > 0) {
-      alert('No PDF files selected or all files were invalid.');
+      alert('No PDF or DOCX files selected, or all files were invalid.');
       return;
     }
     
@@ -545,7 +585,7 @@ function App() {
             </button>
           )}
           <div className="app-title">
-            <h1>{mode === 'pdf-to-md' ? 'PDF to Markdown Converterer' : 'Markdown to Word Converter'}</h1>
+            <h1>{mode === 'pdf-to-md' ? 'PDF to Markdown Converter' : 'Markdown to Word Converter'}</h1>
           </div>
           <div className="top-bar-controls">
             {mode === 'pdf-to-md' && (
@@ -602,7 +642,7 @@ function App() {
             type="file" 
             ref={fileInputRef}
             onChange={handleFileInput}
-            accept=".pdf"
+            accept=".pdf,.docx" // Accept both PDF and DOCX files
             style={{ display: 'none' }}
             // disabled={isLoading && uploadQueue.length > 0} // Removed: Allow adding to queue
             multiple // Allow multiple file selection
@@ -617,8 +657,8 @@ function App() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                   </svg>
                 </div>
-                <h2>Drop your PDF anywhere to convert</h2>
-                <p>Drag and drop a PDF file anywhere on this page, or use the "Select File" button in the top right corner</p>
+                <h2>Drop your PDF or Word file anywhere to convert</h2>
+                <p>Drag and drop a PDF or Word (.docx) file anywhere on this page, or use the "Select File" button in the top right corner</p>
               </div>
             )}
 
@@ -702,13 +742,14 @@ function App() {
                 </div>
                 <div className="loading-text">
                   <p>{loadingStage || "Preparing..."}</p>
-                  {currentFile && ( // This shows info for the *currently processing* file
+                  {currentFile && ( 
                     <div className="file-info">
                       <span className="filename">📄 {currentFile.name}</span>
                       <span className="file-size">
                         {(currentFile.size / (1024 * 1024)).toFixed(1)} MB
                       </span>
-                      {totalPages > 0 && (
+                      {/* Conditional page info: only for PDFs (totalPages will be > 0 for PDFs during polling) */}
+                      {(currentFile.type.includes('pdf') || currentFile.name.toLowerCase().endsWith('.pdf')) && totalPages > 0 && (
                         <span className="page-info">
                           {currentPage > 0 ? `Page ${currentPage} of ${totalPages}` : `${totalPages} pages total`}
                         </span>

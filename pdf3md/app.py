@@ -153,6 +153,34 @@ def convert_pdf_with_progress(temp_path, conversion_id, filename):
 @app.route('/convert', methods=['POST'])
 def convert():
     try:
+        # --- BEGIN ADDED CLEANUP ---
+        # Proactively clean up any orphaned temp_*.pdf files
+        # Assumes temp files are in the same directory as app.py
+        # The current working directory for app.py when run via Docker is /app/pdf3md
+        # but when run locally for dev, it's where app.py is.
+        # os.abspath('.') will give the correct directory in both cases if app.py is the entrypoint.
+        current_dir = os.path.abspath(os.path.dirname(__file__)) # More robust way to get script's dir
+        logger.info(f"Checking for orphaned temp files in: {current_dir}")
+        cleaned_count = 0
+        for filename in os.listdir(current_dir):
+            if filename.startswith('temp_') and filename.endswith('.pdf'):
+                # Further check if it's an orphaned file (not in current conversion_progress)
+                # This check is a bit tricky because conversion_id is generated *after* this cleanup.
+                # For simplicity, we'll clean up any file matching the pattern.
+                # A more sophisticated check might involve checking if the conversion_id part of the filename
+                # corresponds to an active or very recent conversion.
+                # However, given the problem is orphaned files, a broad cleanup is likely fine.
+                file_path_to_delete = os.path.join(current_dir, filename)
+                try:
+                    os.remove(file_path_to_delete)
+                    logger.info(f"Proactively removed orphaned temp file: {file_path_to_delete}")
+                    cleaned_count += 1
+                except Exception as e_clean:
+                    logger.error(f"Error removing orphaned temp file {file_path_to_delete}: {e_clean}")
+        if cleaned_count > 0:
+            logger.info(f"Proactively cleaned up {cleaned_count} orphaned temp PDF files.")
+        # --- END ADDED CLEANUP ---
+
         if 'pdf' not in request.files:
             logger.error('No file in request')
             return jsonify({'error': 'No file uploaded'}), 400
@@ -298,6 +326,94 @@ def convert_markdown_to_word():
         logger.error(f'Error in markdown to word conversion: {str(e)}')
         logger.error(traceback.format_exc())
         return jsonify({'error': f'Conversion error: {str(e)}'}), 500
+
+def convert_docx_to_markdown_sync(docx_path, original_filename):
+    """Convert DOCX file to markdown text using Pandoc."""
+    try:
+        logger.debug(f"Attempting to convert DOCX to markdown for filename: {original_filename} using pandoc from path: {docx_path}")
+        
+        # pypandoc.ensure_pandoc_installed() # Optional, useful for debugging
+        
+        markdown_output = pypandoc.convert_file(
+            docx_path,
+            'markdown_strict', # Using markdown_strict for cleaner output, can be 'md' or other flavors
+            format='docx'
+            # extra_args=['--verbose'] # Uncomment for pandoc verbose logging if needed
+        )
+        
+        logger.info(f"Successfully converted DOCX to markdown for {original_filename} using pandoc.")
+        
+        # Get file metadata (size, page count is not applicable for DOCX in this context)
+        file_size = os.path.getsize(docx_path)
+
+        def format_file_size(size_bytes):
+            if size_bytes < 1024:
+                return f"{size_bytes} B"
+            elif size_bytes < 1024 * 1024:
+                return f"{size_bytes / 1024:.1f} KB"
+            else:
+                return f"{size_bytes / (1024 * 1024):.1f} MB"
+
+        result = {
+            'markdown': markdown_output,
+            'filename': original_filename,
+            'fileSize': format_file_size(file_size),
+            'pageCount': None, # Page count is not directly applicable/easy to get for DOCX like PDF
+            'timestamp': datetime.now().isoformat(),
+            'success': True
+        }
+        return result
+        
+    except FileNotFoundError: # Specifically catch if pandoc is not found
+        logger.error('Pandoc not found. Please ensure Pandoc is installed and in your PATH.')
+        logger.error(traceback.format_exc())
+        raise RuntimeError('Pandoc not found. DOCX to Markdown conversion failed.')
+    except Exception as e:
+        logger.error(f'Error converting DOCX to markdown using Pandoc: {str(e)}')
+        logger.error(traceback.format_exc())
+        raise e # Re-raise to be handled by the route
+
+@app.route('/convert-word-to-markdown', methods=['POST'])
+def convert_word_to_markdown_route():
+    temp_path = None
+    try:
+        if 'document' not in request.files: # Expecting 'document' as the key for docx files
+            logger.error('No file in request for Word to Markdown conversion')
+            return jsonify({'error': 'No file uploaded'}), 400
+            
+        file = request.files['document']
+        if file.filename == '':
+            logger.error('Empty filename for Word to Markdown conversion')
+            return jsonify({'error': 'No file selected'}), 400
+
+        if not (file.filename.endswith('.docx')):
+            logger.error(f'Invalid file type: {file.filename}. Expected .docx')
+            return jsonify({'error': 'Invalid file type. Only .docx files are supported'}), 400
+
+        # Save uploaded file temporarily
+        conversion_id = str(uuid.uuid4()) # For unique temp filename
+        temp_filename = f'temp_word_upload_{conversion_id}.docx'
+        temp_path = os.path.abspath(temp_filename)
+        logger.info(f'Saving Word file to {temp_path}')
+        file.save(temp_path)
+        
+        # Perform conversion
+        conversion_result = convert_docx_to_markdown_sync(temp_path, file.filename)
+        
+        return jsonify(conversion_result)
+        
+    except Exception as e:
+        logger.error(f'Server error during Word to Markdown conversion: {str(e)}')
+        logger.error(traceback.format_exc())
+        return jsonify({'error': f'Server error: {str(e)}', 'success': False}), 500
+    finally:
+        # Clean up the temporary DOCX file
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+                logger.info(f"Successfully removed temporary Word upload file: {temp_path}")
+            except Exception as e_clean:
+                logger.error(f"Error removing temporary Word upload file {temp_path}: {str(e_clean)}")
 
 if __name__ == '__main__':
     logger.info('Starting Flask server...')
