@@ -6,6 +6,8 @@ services:
     container_name: pdf3md-backend
     ports:
       - "6201:6201"
+    expose:
+      - "6201"
     environment:
       - PYTHONUNBUFFERED=1
       - FLASK_ENV=production
