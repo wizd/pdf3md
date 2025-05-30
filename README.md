@@ -205,9 +205,6 @@ The `pdf3md` sub-directory contains scripts for managing both services:
     -   `FLASK_ENV`: `development` or `production`.
     -   `FLASK_DEBUG`: `1` for debug mode.
 
-<<<<<<< HEAD
-=======
-
 ### Network Configuration and Access
 
 The application is designed with the following network assumptions when using the Docker Compose setup:
@@ -216,7 +213,6 @@ The application is designed with the following network assumptions when using th
 *   **Local Area Network (LAN) Access:** If you access the frontend from another device on your LAN (e.g., `http://<host-ip-address>:3000`), the frontend will attempt to connect to the backend at `http://<host-ip-address>:6201`. This requires the host machine's firewall to allow incoming connections on port `6201` from other devices on the LAN.
 *   **Limitations:** This setup assumes the backend API is always reachable on the same hostname as the frontend, but on port `6201`. For more complex deployment scenarios (e.g., different domains/subdomains for frontend and backend, or API gateways), further configuration, potentially involving environment variables for the API base URL in the frontend build, would be necessary. The current Docker setup is primarily optimized for local development and straightforward LAN access.
 
->>>>>>> main
 ## Troubleshooting
 
 -   **Port Conflicts**: Ensure ports `3000`, `5173` (for dev), and `6201` are not in use by other applications. Use `docker compose down` to stop existing PDF3MD containers.
