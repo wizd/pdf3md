@@ -55,6 +55,7 @@ This method uses pre-built Docker images from Docker Hub for quick setup. You'll
             environment:
               - PYTHONUNBUFFERED=1
               - FLASK_ENV=production
+              - TZ=America/Chicago
             volumes:
               - ./pdf3md/temp:/app/temp # Creates a local temp folder for backend processing if needed
             restart: unless-stopped
@@ -96,6 +97,8 @@ This method uses pre-built Docker images from Docker Hub for quick setup. You'll
     This will pull the latest images from Docker Hub and start the application.
     -   Access Frontend: `http://localhost:3000`
     -   Access Backend API: `http://localhost:6201`
+    
+
 
 3.  **Start in Development Mode** (with hot-reloading):
     ```bash
@@ -104,13 +107,16 @@ This method uses pre-built Docker images from Docker Hub for quick setup. You'll
     This uses local source code for development if `docker-compose.dev.yml` is present and configured for local mounts. Otherwise, it may behave like production mode depending on the script's logic.
     -   Access Frontend (Vite Dev Server, if using local source): `http://localhost:5173`
     -   Access Backend API: `http://localhost:6201`
+    
+
 
 4.  **Other Useful Script Commands**:
     ```bash
-    ./docker-start.sh stop      # Stop all services
-    ./docker-start.sh status    # Check running services
-    ./docker-start.sh logs      # View logs from services
-    ./docker-start.sh help      # Display all available script commands
+    ./docker-start.sh stop                  # Stop all services
+    ./docker-start.sh status                # Check running services
+    ./docker-start.sh logs                  # View logs from services
+    ./docker-start.sh rebuild dev           # Rebuild development 
+    ./docker-start.sh help                  # Display all available script commands
     ```
 
 ### Direct Docker Compose Usage (Alternative with Pre-built Images)
@@ -129,7 +135,9 @@ If you prefer to use Docker Compose commands directly with the pre-built images 
     docker compose pull # Pulls the latest images specified in docker-compose.yml
     docker compose up -d
     ```
-3.  **Access Application**: Frontend at `http://localhost:3000`, Backend API at `http://localhost:6201`.
+    
+3.  **Access Application**: 
+    - Frontend at `http://localhost:3000`, Backend API at `http://localhost:6201`
 4.  **Stop Services**:
     ```bash
     docker compose down
@@ -149,7 +157,9 @@ This setup is for developing the application locally, not using pre-built images
     ```bash
     docker compose -f docker-compose.dev.yml up --build
     ```
-3.  **Access Application**: Frontend (Vite) at `http://localhost:5173`, Backend API at `http://localhost:6201`.
+    
+3.  **Access Application**: 
+    - Frontend (Vite) at `http://localhost:5173`, Backend API at `http://localhost:6201`
 4.  **Stop Services**:
     ```bash
     docker compose -f docker-compose.dev.yml down
@@ -204,6 +214,7 @@ The `pdf3md` sub-directory contains scripts for managing both services:
 -   **Environment Variables (Docker)**:
     -   `FLASK_ENV`: `development` or `production`.
     -   `FLASK_DEBUG`: `1` for debug mode.
+    -   `TZ`: Timezone configuration for the backend container. You can modify this in the Docker Compose files to match your local timezone (e.g., `America/New_York`).
 
 ### Network Configuration and Access
 

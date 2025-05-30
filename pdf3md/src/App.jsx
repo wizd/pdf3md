@@ -136,6 +136,19 @@ function App() {
     // setSelectedHistoryId(historyItem.id); 
   };
 
+  // Helper function to get the backend URL
+  const getBackendUrl = () => {
+    // In development, use the proxy configured in vite.config.js
+    if (import.meta.env.DEV) {
+      return '';
+    }
+    
+    // In production, use the backend container name or HOST_DOMAIN if available
+    return window.location.hostname === 'localhost' 
+      ? 'http://localhost:6201' 
+      : `http://${window.location.hostname}:6201`;
+  };
+
   const pollProgress = async (conversionId, fileName) => {
     activeConversionId.current = conversionId;
     const pollInterval = setInterval(async () => {
@@ -144,7 +157,7 @@ function App() {
         return;
       }
       try {
-        const response = await fetch(`http://${window.location.hostname}:6201/progress/${conversionId}`);
+        const response = await fetch(`${getBackendUrl()}/progress/${conversionId}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
         const progressData = await response.json();
@@ -254,16 +267,16 @@ function App() {
 
     if (isPdf) {
       formData.append('pdf', file);
-      endpoint = `http://${window.location.hostname}:6201/convert`;
+      endpoint = `/convert`;
       fileKey = 'pdf';
     } else if (isDocx) {
       formData.append('document', file);
-      endpoint = `http://${window.location.hostname}:6201/convert-word-to-markdown`;
+      endpoint = `/convert-word-to-markdown`;
       fileKey = 'document';
     }
 
     try {
-      const response = await fetch(endpoint, {
+      const response = await fetch(`${getBackendUrl()}${endpoint}`, {
         method: 'POST',
         body: formData,
       });
@@ -497,7 +510,7 @@ function App() {
     setIsConverting(true);
 
     try {
-      const response = await fetch(`http://${window.location.hostname}:6201/convert-markdown-to-word`, {
+        const response = await fetch(`${getBackendUrl()}/convert-markdown-to-word`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -58,10 +58,22 @@ Get PDF3MD running in under 2 minutes!
     ```
     This will pull the latest images from Docker Hub and start the application.
 
-# 3. Open in browser
-# Frontend: http://localhost:3000
-# Backend: http://localhost:6201
-```
+    You can also specify a custom domain or IP address:
+    ```bash
+    ./docker-start.sh start example.com
+    ```
+    This is useful when accessing the application from other devices on your network.
+
+3.  **Open in browser**:
+    ```
+    # With default settings:
+    # Frontend: http://localhost:3000
+    # Backend: http://localhost:6201
+    
+    # With custom domain:
+    # Frontend: http://example.com:3000
+    # Backend: http://example.com:6201
+    ```
 
 **That's it!**
 
@@ -78,16 +90,29 @@ This mode is for making code changes and requires cloning the full repository.
     ./docker-start.sh dev
     ```
     This typically uses `docker-compose.dev.yml` to build images locally and mount your source code for hot-reloading.
+    
+    You can also specify a custom domain or IP address for development:
+    ```bash
+    ./docker-start.sh dev 192.168.1.100
     ```
+    
+    ```
+    # With default settings:
     # Frontend with hot-reload: http://localhost:5173
+    # Backend: http://localhost:6201
+    
+    # With custom domain/IP:
+    # Frontend: http://192.168.1.100:5173
+    # Backend: http://192.168.1.100:6201
     ```
 
 ### Useful Commands (with `docker-start.sh`)
 ```bash
-./docker-start.sh status    # Check what's running
-./docker-start.sh stop      # Stop everything
-./docker-start.sh logs      # View logs
-./docker-start.sh help      # See all options
+./docker-start.sh status                # Check what's running
+./docker-start.sh stop                  # Stop everything
+./docker-start.sh logs                  # View logs
+./docker-start.sh rebuild dev example.com  # Rebuild development with custom domain
+./docker-start.sh help                  # See all options
 ```
 
 ## Option 2: Manual Setup (Running without Docker)

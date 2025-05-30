@@ -10,7 +10,7 @@ services:
       - PYTHONUNBUFFERED=1
       - FLASK_ENV=development
       - FLASK_DEBUG=1
-      - ALLOWED_CORS_ORIGINS=http://pdf3md.local # Add other custom origins here, comma-separated
+      - TZ=America/Chicago
     volumes:
       - ./pdf3md:/app
       - ./pdf3md/temp:/app/temp

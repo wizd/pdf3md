@@ -38,14 +38,15 @@ check_docker() {
 
 # Function to start production environment
 start_production() {
-    print_status "Starting PDF3MD in production mode..."
-    docker compose up -d
+    local domain=${1:-localhost}
+    print_status "Starting PDF3MD in production mode with domain: $domain..."
+    HOST_DOMAIN=$domain docker compose up -d
     
     if [ $? -eq 0 ]; then
         print_success "PDF3MD is now running!"
         echo ""
-        echo "🌐 Frontend: http://localhost:3000"
-        echo "🔧 Backend API: http://localhost:6201"
+        echo "🌐 Frontend: http://$domain:3000"
+        echo "🔧 Backend API: http://$domain:6201"
         echo ""
         echo "To view logs: docker compose logs -f"
         echo "To stop: docker compose down"
@@ -57,14 +58,15 @@ start_production() {
 
 # Function to start development environment
 start_development() {
-    print_status "Starting PDF3MD in development mode..."
-    docker compose -f docker-compose.dev.yml up -d
+    local domain=${1:-localhost}
+    print_status "Starting PDF3MD in development mode with domain: $domain..."
+    HOST_DOMAIN=$domain docker compose -f docker-compose.dev.yml up -d
     
     if [ $? -eq 0 ]; then
         print_success "PDF3MD development environment is now running!"
         echo ""
-        echo "🌐 Frontend (with hot-reload): http://localhost:5173"
-        echo "🔧 Backend API: http://localhost:6201"
+        echo "🌐 Frontend (with hot-reload): http://$domain:5173"
+        echo "🔧 Backend API: http://$domain:6201"
         echo ""
         echo "To view logs: docker compose -f docker-compose.dev.yml logs -f"
         echo "To stop: docker compose -f docker-compose.dev.yml down"
@@ -116,16 +118,18 @@ show_status() {
 
 # Function to rebuild and start
 rebuild() {
+    local env="$1"
+    local domain="${2:-localhost}"
     print_status "Rebuilding and starting PDF3MD..."
     
-    if [ "$1" = "dev" ]; then
+    if [ "$env" = "dev" ]; then
         docker compose -f docker-compose.dev.yml down
-        docker compose -f docker-compose.dev.yml up -d --build
-        print_success "Development environment rebuilt and started!"
+        HOST_DOMAIN=$domain docker compose -f docker-compose.dev.yml up -d --build
+        print_success "Development environment rebuilt and started with domain: $domain!"
     else
         docker compose down
-        docker compose up -d --build
-        print_success "Production environment rebuilt and started!"
+        HOST_DOMAIN=$domain docker compose up -d --build
+        print_success "Production environment rebuilt and started with domain: $domain!"
     fi
 }
 
@@ -133,22 +137,30 @@ rebuild() {
 show_help() {
     echo "PDF3MD Docker Management Script"
     echo ""
-    echo "Usage: $0 [COMMAND]"
+    echo "Usage: $0 [COMMAND] [build] [DOMAIN]"
     echo ""
     echo "Commands:"
-    echo "  start, prod     Start production environment"
-    echo "  dev             Start development environment"
-    echo "  stop            Stop all environments"
-    echo "  status          Show status of all environments"
-    echo "  rebuild [dev]   Rebuild and start (add 'dev' for development)"
-    echo "  logs [dev]      Show logs (add 'dev' for development)"
-    echo "  help            Show this help message"
+    echo "  start, prod [build] [domain]  Start production environment with optional domain/IP (default: localhost)"
+    echo "  dev [build] [domain]          Start development environment with optional domain/IP (default: localhost)"
+    echo "  stop                  Stop all environments"
+    echo "  status                Show status of all environments"
+    echo "  rebuild [build] [dev] [domain] Rebuild and start (add 'dev' for development, optional domain/IP)"
+    echo "  logs [build] [dev]    Show logs (add 'dev' for development)"
+    echo "  help                  Show this help message"
     echo ""
     echo "Examples:"
-    echo "  $0 start        # Start production"
-    echo "  $0 dev          # Start development"
-    echo "  $0 rebuild dev  # Rebuild development environment"
-    echo "  $0 logs         # Show production logs"
+    echo "  $0 start                    # Start production with localhost"
+    echo "  $0 start example.com        # Start production with custom domain"
+    echo "  $0 start build example.com  # Start production with custom domain (with build flag)"
+    echo "  $0 dev 192.168.1.100        # Start development with IP address"
+    echo "  $0 dev pdf2md.local         # Start development with custom domain"
+    echo "  $0 dev build pdf2md.local   # Start development with custom domain (with build flag)"
+    echo "  $0 rebuild dev              # Rebuild development environment with localhost"
+    echo "  $0 rebuild dev example.com  # Rebuild development with custom domain"
+    echo "  $0 rebuild build dev example.com # Rebuild development with custom domain (with build flag)"
+    echo "  $0 logs                    # Show production logs"
+    echo "  $0 logs dev                # Show development logs"
+    echo "  $0 logs build dev          # Show development logs (with build flag)"
 }
 
 # Function to show logs
@@ -167,10 +179,24 @@ check_docker
 
 case "${1:-help}" in
     "start"|"prod")
-        start_production
+        # Check if the second parameter is "build"
+        if [ "$2" = "build" ]; then
+            # Use the third parameter as the domain
+            start_production "$3"
+        else
+            # Use the second parameter as the domain
+            start_production "$2"
+        fi
         ;;
     "dev")
-        start_development
+        # Check if the second parameter is "build"
+        if [ "$2" = "build" ]; then
+            # Use the third parameter as the domain
+            start_development "$3"
+        else
+            # Use the second parameter as the domain
+            start_development "$2"
+        fi
         ;;
     "stop")
         stop_all
@@ -179,10 +205,24 @@ case "${1:-help}" in
         show_status
         ;;
     "rebuild")
-        rebuild "$2"
+        # Check if the second parameter is "build"
+        if [ "$2" = "build" ]; then
+            # Use the third parameter as the environment and the fourth parameter as the domain
+            rebuild "$3" "$4"
+        else
+            # Use the second parameter as the environment and the third parameter as the domain
+            rebuild "$2" "$3"
+        fi
         ;;
     "logs")
-        show_logs "$2"
+        # Check if the second parameter is "build"
+        if [ "$2" = "build" ]; then
+            # Use the third parameter as the environment
+            show_logs "$3"
+        else
+            # Use the second parameter as the environment
+            show_logs "$2"
+        fi
         ;;
     "help"|*)
         show_help

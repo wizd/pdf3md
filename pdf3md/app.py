@@ -19,31 +19,29 @@ import traceback
 
 app = Flask(__name__)
 
-# Default CORS origins for typical local development
-default_origins = [
-    "http://localhost:5173",    # Vite dev server default
-    "http://localhost:3000",    # Production frontend port in Docker
+# Simple CORS origins configuration
+allowed_origins = [
+    "http://localhost:5173",    # Vite dev server
+    "http://localhost:3000",    # Production frontend
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3000"
 ]
 
-# Get additional origins from environment variable
-additional_origins_str = os.environ.get('ALLOWED_CORS_ORIGINS')
-all_allowed_origins = list(default_origins) # Start with a copy of defaults
+# Add custom origins from environment variable
+custom_origins = os.environ.get('ALLOWED_CORS_ORIGINS')
+if custom_origins:
+    # Split comma-separated origins and add them
+    additional_origins = [origin.strip() for origin in custom_origins.split(',') if origin.strip()]
+    allowed_origins.extend(additional_origins)
 
-if additional_origins_str:
-    # Split the comma-separated string and strip whitespace from each origin
-    custom_origins = [origin.strip() for origin in additional_origins_str.split(',')]
-    all_allowed_origins.extend(custom_origins)
-
-# Remove duplicates by converting to a set and back to a list
-final_origins = list(set(all_allowed_origins))
-
-CORS(app, origins=final_origins, supports_credentials=True)
-
-# Set up logging
+# Set up logging (ensure logger is configured before use, especially for the CORS log line)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+logger.info(f"Initializing CORS with origins: {allowed_origins}")
+
+# Simple CORS configuration
+CORS(app, origins=allowed_origins)
 
 # Store conversion progress
 conversion_progress = {}
