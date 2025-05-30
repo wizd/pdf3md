@@ -21,6 +21,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - pdf3md-network
 
   frontend:
     build:
@@ -44,7 +46,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - pdf3md-network
 
 networks:
-  default:
+  pdf3md-network:
     name: pdf3md-network
