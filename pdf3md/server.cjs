@@ -73,7 +73,7 @@ app.use('/convert', createProxyMiddleware(convertProxyOptions));
 // --- End of explicit HPM setup for /convert ---
 
 // API routes that need to be proxied to the backend (excluding /convert as it's handled above)
-const 나머지ApiRoutes = [
+const remainingApiRoutes = [
 // '/convert', // Handled explicitly above
     '/progress',
     '/convert-word-to-markdown',
@@ -81,14 +81,14 @@ const 나머지ApiRoutes = [
 ];
 
 // Setup proxy middleware for each API route
-나머지ApiRoutes.forEach(route => {
+remainingApiRoutes.forEach(route => {
     console.log(`[PROXY SETUP] Attempting to register proxy for route: "${route}"`);
     if (typeof route !== 'string' || route.includes(':')) {
         console.error(`[PROXY SETUP ERROR] Invalid route detected: "${route}". Skipping.`);
         return;
     }
 
-    const 일반ProxyOptions = {
+    const generalProxyOptions = {
         target: backendServiceUrl,
         changeOrigin: true,
         onProxyReq: (proxyReq, req, res) => {
@@ -106,7 +106,7 @@ const 나머지ApiRoutes = [
             res.end(JSON.stringify({ message: `Proxy error for ${route}`, error: err.message, code: err.code }));
         }
     };
-    app.use(route, createProxyMiddleware(일반ProxyOptions));
+    app.use(route, createProxyMiddleware(generalProxyOptions));
     console.log(`[PROXY SETUP] Proxy for route "${route}" to "${backendServiceUrl}" is active.`);
 });
 
@@ -147,7 +147,9 @@ app.use((err, req, res, next) => {
 app.listen(port, '0.0.0.0', () => {
     console.log(`Frontend server is live on http://0.0.0.0:${port}`);
     console.log('Proxying API requests:');
-    나머지ApiRoutes.forEach(route => {
+    // Log the explicitly handled /convert route first
+    console.log(`  /convert -> ${backendServiceUrl}/convert (explicitly handled)`);
+    remainingApiRoutes.forEach(route => {
         console.log(`  ${route} -> ${backendServiceUrl}${route}`);
     });
     console.log(`Serving static files from ${path.join(__dirname, 'dist')}`);
