@@ -9,7 +9,7 @@ services:
       - FLASK_ENV=production
       - TZ=America/Chicago
     volumes:
-      - ./pdf3md/temp:/app/temp
+      - ../files/pdf3md/temp:/app/temp
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:6201/"]
@@ -22,13 +22,15 @@ services:
     image: docker.io/learnedmachine/pdf3md-frontend:latest 
     container_name: pdf3md-frontend
     ports:
-      - "3000:3000"
+      - "6202:6202"
+    expose:
+      - "6202"
     environment: {}
     depends_on:
       - backend
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6202/"]
       interval: 30s
       timeout: 10s
       retries: 3
