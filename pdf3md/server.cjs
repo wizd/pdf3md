@@ -80,9 +80,19 @@ apiRoutes.forEach(route => {
     const proxyOptions = {
         target: backendServiceUrl,
         changeOrigin: true,
-        logLevel: 'debug', // Ensure this is active
+        // logLevel: 'debug', // Temporarily remove to simplify and ensure other logs are seen
+
+        onProxyReq: (proxyReq, req, res) => {
+            const targetPath = `${proxyReq.protocol}//${proxyReq.host}${proxyReq.path}`;
+            const logMessage = `[HPM Event - onProxyReq] Original: ${req.method} ${req.originalUrl} ---> Target: ${proxyReq.method} ${targetPath}`;
+            console.log(logMessage);
+            process.stdout.write(logMessage + '\n'); // Force write to stdout
+            // console.log(`[HPM Event - onProxyReq] Headers:`, JSON.stringify(proxyReq.getHeaders(), null, 2)); // Keep this commented for now to reduce noise
+        },
+
         onError: (err, req, res, target) => {
             console.error('--- PROXY ERROR HANDLER CAUGHT AN ERROR ---');
+            process.stderr.write('--- PROXY ERROR HANDLER CAUGHT AN ERROR (stderr) ---\n');
             console.error('Timestamp:', new Date().toISOString());
             console.error('Original Request URL:', req.method, req.originalUrl);
             // 'target' argument might be a URL object or undefined
@@ -112,10 +122,6 @@ apiRoutes.forEach(route => {
                 error: err.message,
                 code: err.code
             }));
-        },
-        onProxyReq: (proxyReq, req, res) => {
-            console.log(`[HPM Event - onProxyReq] Proxying request: ${req.method} ${req.originalUrl} -> ${proxyReq.method} ${proxyReq.protocol}//${proxyReq.host}${proxyReq.path}`);
-            console.log(`[HPM Event - onProxyReq] Proxy request headers:`, JSON.stringify(proxyReq.getHeaders(), null, 2));
         },
         onProxyRes: (proxyRes, req, res) => {
             console.log(`[HPM Event - onProxyRes] Received response from target for: ${req.originalUrl}`);
