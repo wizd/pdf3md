@@ -7,6 +7,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - FLASK_ENV=production
+      - TZ=America/Chicago
+      # - ALLOWED_CORS_ORIGINS=http://your-frontend-domain.com # Uncomment and set if frontend is accessed via a custom domain/IP. Comma-separate multiple origins.
     volumes:
       - ./pdf3md/temp:/app/temp
     restart: unless-stopped

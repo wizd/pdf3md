@@ -18,7 +18,28 @@ import pypandoc
 import traceback 
 
 app = Flask(__name__)
-CORS(app)
+
+# Default CORS origins for typical local development
+default_origins = [
+    "http://localhost:5173",    # Vite dev server default
+    "http://localhost:3000",    # Production frontend port in Docker
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000"
+]
+
+# Get additional origins from environment variable
+additional_origins_str = os.environ.get('ALLOWED_CORS_ORIGINS')
+all_allowed_origins = list(default_origins) # Start with a copy of defaults
+
+if additional_origins_str:
+    # Split the comma-separated string and strip whitespace from each origin
+    custom_origins = [origin.strip() for origin in additional_origins_str.split(',')]
+    all_allowed_origins.extend(custom_origins)
+
+# Remove duplicates by converting to a set and back to a list
+final_origins = list(set(all_allowed_origins))
+
+CORS(app, origins=final_origins, supports_credentials=True)
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
