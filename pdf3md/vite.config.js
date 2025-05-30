@@ -7,10 +7,22 @@ export default defineConfig({
   server: {
     proxy: {
       // Proxy API requests to the backend server
-      '/convert': 'http://backend:6201',
-      '/progress': 'http://backend:6201',
-      '/convert-word-to-markdown': 'http://backend:6201',
-      '/convert-markdown-to-word': 'http://backend:6201',
+      '/convert': {
+        target: 'http://backend:6201',
+        changeOrigin: true,
+      },
+      '/progress': {
+        target: 'http://backend:6201',
+        changeOrigin: true,
+      },
+      '/convert-word-to-markdown': {
+        target: 'http://backend:6201',
+        changeOrigin: true,
+      },
+      '/convert-markdown-to-word': {
+        target: 'http://backend:6201',
+        changeOrigin: true,
+      },
     },
     host: '0.0.0.0', // Allow external access
   },
