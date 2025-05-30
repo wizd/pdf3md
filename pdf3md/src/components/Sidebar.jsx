@@ -25,21 +25,42 @@ const Sidebar = ({ isOpen, history, onSelectHistory, selectedHistoryId, onClearH
   }, [searchTerm, history]);
 
   const formatRelativeTime = (timestamp) => {
-    const now = new Date()
-    const time = new Date(timestamp)
-    const diffInMinutes = Math.floor((now - time) / (1000 * 60))
+    const now = new Date();
+    const time = new Date(timestamp);
+
+    // Handle invalid date
+    if (isNaN(time.getTime())) {
+      // console.error('[formatRelativeTime] Invalid timestamp encountered:', timestamp); // Optional: for deeper debugging
+      return 'Invalid date';
+    }
+
+    const diffMs = now.getTime() - time.getTime();
+
+    // If the timestamp is in the future
+    if (diffMs < 0) {
+      const futureDiffMinutes = Math.floor(-diffMs / (1000 * 60));
+      if (futureDiffMinutes < 1) return 'Upcoming'; // Less than a minute in the future
+      if (futureDiffMinutes < 60) return `In ${futureDiffMinutes}m`;
+      const futureDiffHours = Math.floor(futureDiffMinutes / 60);
+      if (futureDiffHours < 24) return `In ${futureDiffHours}h`;
+      // For more than a day in the future, show the date
+      return `On ${time.toLocaleDateString()}`;
+    }
+
+    // For past or current timestamps
+    const diffInMinutes = Math.floor(diffMs / (1000 * 60));
     
-    if (diffInMinutes < 1) return 'Just now'
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+    if (diffInMinutes < 1) return 'Just now'; // 0-59 seconds ago
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`; // 1-59 minutes ago
     
-    const diffInHours = Math.floor(diffInMinutes / 60)
-    if (diffInHours < 24) return `${diffInHours}h ago`
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h ago`;
     
-    const diffInDays = Math.floor(diffInHours / 24)
-    if (diffInDays < 7) return `${diffInDays}d ago`
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays}d ago`;
     
-    return time.toLocaleDateString()
-  }
+    return time.toLocaleDateString(); // Older than 7 days
+  };
 
   const groupHistoryByDate = (history) => {
     const groups = {
