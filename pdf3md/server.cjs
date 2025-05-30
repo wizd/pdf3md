@@ -11,6 +11,13 @@ const backendServiceUrl = 'http://backend:6201';
 console.log(`Frontend server starting on port: ${port}`);
 console.log(`Backend service URL for proxy: ${backendServiceUrl}`);
 
+// Custom logger for /convert to test request flow and logging
+app.use('/convert', (req, res, next) => {
+    console.log(`[CUSTOM LOGGER FOR /convert] Request received: ${req.method} ${req.originalUrl} at ${new Date().toISOString()}`);
+    process.stdout.write('[CUSTOM LOGGER FOR /convert] Request reached here (stdout)\n');
+    next();
+});
+
 // API routes that need to be proxied to the backend
 const apiRoutes = [
     '/convert',
@@ -26,20 +33,56 @@ apiRoutes.forEach(route => {
         console.error(`[PROXY SETUP ERROR] Invalid route detected: "${route}". Skipping.`);
         return;
     }
-    app.use(route, createProxyMiddleware({
+
+    const proxyOptions = {
         target: backendServiceUrl,
-        changeOrigin: true, // Important for virtual hosted sites
-        logLevel: 'debug', // Enable for more proxy diagnostics
-        onError: (err, req, res) => {
-            console.error('Proxy error:', err);
-            if (!res.headersSent) {
-                res.writeHead(500, {
-                    'Content-Type': 'application/json'
-                });
+        changeOrigin: true,
+        logLevel: 'debug', // Ensure this is active
+        onError: (err, req, res, target) => {
+            console.error('--- PROXY ERROR HANDLER CAUGHT AN ERROR ---');
+            console.error('Timestamp:', new Date().toISOString());
+            console.error('Original Request URL:', req.method, req.originalUrl);
+            // 'target' argument might be a URL object or undefined
+            console.error('Configured Proxy Target:', backendServiceUrl);
+            if (target && typeof target.href === 'string') {
+                console.error('Actual Target URL for this request (from HPM):', target.href);
+            } else if (target) {
+                console.error('Actual Target URL for this request (from HPM):', target);
+            } else {
+                console.error('Actual Target URL for this request (from HPM): Not available');
             }
-            res.end(JSON.stringify({ message: 'Proxy error', error: err.message }));
+            console.error('Error Message:', err.message);
+            console.error('Error Code:', err.code);
+            console.error('Error Stack:', err.stack);
+            process.stderr.write(`Explicit STDERR Proxy Error Log: Message - ${err.message}, Code - ${err.code}\n`);
+
+            if (res.headersSent) {
+                console.error('Headers were already sent. Cannot send JSON error response. Ending response if possible.');
+                if (!res.writableEnded) {
+                    res.end();
+                }
+                return;
+            }
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                message: 'Proxying failed. See server logs for more details.',
+                error: err.message,
+                code: err.code
+            }));
+        },
+        onProxyReq: (proxyReq, req, res) => {
+            console.log(`[HPM Event - onProxyReq] Proxying request: ${req.method} ${req.originalUrl} -> ${proxyReq.method} ${proxyReq.protocol}//${proxyReq.host}${proxyReq.path}`);
+            console.log(`[HPM Event - onProxyReq] Proxy request headers:`, JSON.stringify(proxyReq.getHeaders(), null, 2));
+        },
+        onProxyRes: (proxyRes, req, res) => {
+            console.log(`[HPM Event - onProxyRes] Received response from target for: ${req.originalUrl}`);
+            console.log(`[HPM Event - onProxyRes] Target response status: ${proxyRes.statusCode}`);
+            // console.log(`[HPM Event - onProxyRes] Target response headers:`, JSON.stringify(proxyRes.headers, null, 2));
         }
-    }));
+    };
+
+    app.use(route, createProxyMiddleware(proxyOptions));
+    console.log(`[PROXY SETUP] Proxy for route "${route}" to "${backendServiceUrl}" with enhanced logging is active.`);
 });
 
 // Serve static files from the 'dist' folder (Vite's build output)
