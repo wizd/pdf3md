@@ -1,6 +1,27 @@
+process.on('uncaughtException', (err, origin) => {
+    console.error('--- UNCAUGHT EXCEPTION ---');
+    console.error('Timestamp:', new Date().toISOString());
+    console.error('Origin:', origin);
+    console.error('Error Message:', err.message);
+    console.error('Error Name:', err.name);
+    console.error('Error Stack:', err.stack);
+    process.stderr.write(`UNCAUGHT EXCEPTION: Origin - ${origin}, Message - ${err.message}\n`);
+    // It's generally recommended to exit the process after an uncaught exception
+    // process.exit(1); // Consider enabling this in production after thorough testing
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('--- UNHANDLED PROMISE REJECTION ---');
+    console.error('Timestamp:', new Date().toISOString());
+    console.error('Reason:', reason);
+    // console.error('Promise:', promise); // Can be verbose
+    process.stderr.write(`UNHANDLED REJECTION: Reason - ${reason}\n`);
+});
+
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const path = require('path');
+const http = require('http'); // Added for direct backend test
 
 const app = express();
 // PORT an ENV var set in Dockerfile.frontend, default to 6202 if not set for local testing
@@ -15,7 +36,33 @@ console.log(`Backend service URL for proxy: ${backendServiceUrl}`);
 app.use('/convert', (req, res, next) => {
     console.log(`[CUSTOM LOGGER FOR /convert] Request received: ${req.method} ${req.originalUrl} at ${new Date().toISOString()}`);
     process.stdout.write('[CUSTOM LOGGER FOR /convert] Request reached here (stdout)\n');
-    next();
+
+    // Direct backend connectivity test
+    const backendTestUrl = `${backendServiceUrl}/convert`; // Assuming /convert is a valid GET endpoint on backend for testing
+    console.log(`[BACKEND TEST] Attempting direct GET to: ${backendTestUrl}`);
+    const backendRequest = http.get(backendTestUrl, (backendRes) => {
+        let data = '';
+        console.log(`[BACKEND TEST] STATUS: ${backendRes.statusCode}`);
+        console.log(`[BACKEND TEST] HEADERS: ${JSON.stringify(backendRes.headers)}`);
+        backendRes.on('data', (chunk) => { data += chunk; });
+        backendRes.on('end', () => {
+            console.log('[BACKEND TEST] Successfully connected to backend. Response length:', data.length);
+            // next(); // Proceed only if test is successful, or remove test for production
+        });
+    }).on('error', (e) => {
+        console.error(`[BACKEND TEST] ERROR connecting to backend: ${e.message}`);
+        console.error(`[BACKEND TEST] Error Code: ${e.code}`);
+        console.error('[BACKEND TEST] Error Stack:', e.stack);
+        // Do not call next() if backend test fails, or handle error appropriately
+        // Potentially send an immediate error response to client if this test is critical
+        // For now, we will still call next() to let HPM try, but we have logged the failure.
+    });
+    backendRequest.setTimeout(5000, () => { // 5 second timeout for the test
+        console.error('[BACKEND TEST] Timeout connecting to backend.');
+        backendRequest.destroy(); // or backendRequest.abort() in newer Node versions
+    });
+
+    next(); // Call next() immediately for now to allow HPM to proceed regardless of test outcome
 });
 
 // API routes that need to be proxied to the backend
