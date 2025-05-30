@@ -138,15 +138,8 @@ function App() {
 
   // Helper function to get the backend URL
   const getBackendUrl = () => {
-    // In development, use the proxy configured in vite.config.js
-    if (import.meta.env.DEV) {
-      return '';
-    }
-    
-    // In production, use the backend container name or HOST_DOMAIN if available
-    return window.location.hostname === 'localhost' 
-      ? 'http://localhost:6201' 
-      : `https://${window.location.hostname}`;
+    // All API requests will now be relative, handled by Vite dev proxy or production Express proxy.
+    return ''; 
   };
 
   const pollProgress = async (conversionId, fileName) => {

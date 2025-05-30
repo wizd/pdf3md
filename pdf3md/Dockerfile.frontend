@@ -3,26 +3,24 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files (package.json and package-lock.json)
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies (including express and http-proxy-middleware if they are in package-lock.json)
 RUN npm ci
 
-# Copy source code
+# Copy the rest of the application code, including server.js
 COPY . .
 
-# Build the application
+# Build the React application
 RUN npm run build
 
-# Install a simple HTTP server to serve the built files
-RUN npm install -g serve
-
+# PORT an ENV var, defaults to 6202 if not set (same as in docker-compose and server.js)
 ARG FRONTEND_PORT
-ENV PORT=${FRONTEND_PORT:-3000}
+ENV PORT=${FRONTEND_PORT:-6202}
 
-# Expose port
+# Expose the port the app runs on
 EXPOSE ${PORT}
 
-# Serve the built application
-CMD ["serve", "-s", "dist"]
+# Start the custom Express server
+CMD ["node", "server.js"]
