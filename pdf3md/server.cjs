@@ -36,102 +36,78 @@ console.log(`Backend service URL for proxy: ${backendServiceUrl}`);
 app.use('/convert', (req, res, next) => {
     console.log(`[CUSTOM LOGGER FOR /convert] Request received: ${req.method} ${req.originalUrl} at ${new Date().toISOString()}`);
     process.stdout.write('[CUSTOM LOGGER FOR /convert] Request reached here (stdout)\n');
-
-    // // Direct backend connectivity test (Temporarily commented out for focused HPM debugging)
-    // const backendTestUrl = `${backendServiceUrl}/convert`;
-    // console.log(`[BACKEND TEST] Attempting direct GET to: ${backendTestUrl}`);
-    // const backendRequest = http.get(backendTestUrl, (backendRes) => {
-    //     let data = '';
-    //     console.log(`[BACKEND TEST] STATUS: ${backendRes.statusCode}`);
-    //     console.log(`[BACKEND TEST] HEADERS: ${JSON.stringify(backendRes.headers)}`);
-    //     backendRes.on('data', (chunk) => { data += chunk; });
-    //     backendRes.on('end', () => {
-    //         console.log('[BACKEND TEST] Successfully connected to backend. Response length:', data.length);
-    //     });
-    // }).on('error', (e) => {
-    //     console.error(`[BACKEND TEST] ERROR connecting to backend: ${e.message}`);
-    //     console.error(`[BACKEND TEST] Error Code: ${e.code}`);
-    //     console.error('[BACKEND TEST] Error Stack:', e.stack);
-    // });
-    // backendRequest.setTimeout(5000, () => {
-    //     console.error('[BACKEND TEST] Timeout connecting to backend.');
-    //     backendRequest.destroy();
-    // });
-
-    next(); // Call next() to allow HPM to proceed
+    next();
 });
 
-// API routes that need to be proxied to the backend
-const apiRoutes = [
-    '/convert',
+// --- Explicit HPM setup for /convert --- 
+const convertProxyOptions = {
+    target: backendServiceUrl,
+    changeOrigin: true,
+    onProxyReq: (proxyReq, req, res) => {
+        const targetPath = `${proxyReq.protocol}//${proxyReq.host}${proxyReq.path}`;
+        const logMessage = `[HPM Event onProxyReq for /convert] Original: ${req.method} ${req.originalUrl} ---> Target: ${proxyReq.method} ${targetPath}`;
+        console.log(logMessage);
+        process.stdout.write(logMessage + '\n');
+    },
+    onError: (err, req, res, target) => {
+        console.error('--- PROXY ERROR HANDLER (for /convert) ---');
+        process.stderr.write('--- PROXY ERROR HANDLER (for /convert) (stderr) ---\n');
+        console.error('Timestamp:', new Date().toISOString());
+        console.error('Original Request URL:', req.method, req.originalUrl);
+        console.error('Error Message:', err.message);
+        // ... (rest of onError remains the same)
+        if (res.headersSent) {
+            console.error('Headers were already sent. Cannot send JSON error response.');
+            if (!res.writableEnded) res.end();
+            return;
+        }
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Proxy error for /convert', error: err.message, code: err.code }));
+    },
+    onProxyRes: (proxyRes, req, res) => { // Added for completeness
+        console.log(`[HPM Event onProxyRes for /convert] Received response status: ${proxyRes.statusCode} for ${req.originalUrl}`);
+    }
+};
+console.log(`[PROXY SETUP DEBUG] Setting up explicit proxy for /convert to target: ${convertProxyOptions.target}`);
+app.use('/convert', createProxyMiddleware(convertProxyOptions));
+// --- End of explicit HPM setup for /convert ---
+
+// API routes that need to be proxied to the backend (excluding /convert as it's handled above)
+const 나머지ApiRoutes = [
+// '/convert', // Handled explicitly above
     '/progress',
     '/convert-word-to-markdown',
     '/convert-markdown-to-word'
 ];
 
 // Setup proxy middleware for each API route
-apiRoutes.forEach(route => {
-    console.log(`[PROXY SETUP] Attempting to register proxy for route: "${route}"`); // Diagnostic log
-    if (typeof route !== 'string' || route.includes(':')) { // Additional check
+나머지ApiRoutes.forEach(route => {
+    console.log(`[PROXY SETUP] Attempting to register proxy for route: "${route}"`);
+    if (typeof route !== 'string' || route.includes(':')) {
         console.error(`[PROXY SETUP ERROR] Invalid route detected: "${route}". Skipping.`);
         return;
     }
 
-    const proxyOptions = {
+    const 일반ProxyOptions = {
         target: backendServiceUrl,
         changeOrigin: true,
-        // logLevel: 'debug', // Temporarily remove to simplify and ensure other logs are seen
-
         onProxyReq: (proxyReq, req, res) => {
             const targetPath = `${proxyReq.protocol}//${proxyReq.host}${proxyReq.path}`;
-            const logMessage = `[HPM Event - onProxyReq] Original: ${req.method} ${req.originalUrl} ---> Target: ${proxyReq.method} ${targetPath}`;
+            const logMessage = `[HPM Event onProxyReq for ${route}] Original: ${req.method} ${req.originalUrl} ---> Target: ${proxyReq.method} ${targetPath}`;
             console.log(logMessage);
-            process.stdout.write(logMessage + '\n'); // Force write to stdout
-            // console.log(`[HPM Event - onProxyReq] Headers:`, JSON.stringify(proxyReq.getHeaders(), null, 2)); // Keep this commented for now to reduce noise
+            process.stdout.write(logMessage + '\n');
         },
-
         onError: (err, req, res, target) => {
-            console.error('--- PROXY ERROR HANDLER CAUGHT AN ERROR ---');
-            process.stderr.write('--- PROXY ERROR HANDLER CAUGHT AN ERROR (stderr) ---\n');
-            console.error('Timestamp:', new Date().toISOString());
-            console.error('Original Request URL:', req.method, req.originalUrl);
-            // 'target' argument might be a URL object or undefined
-            console.error('Configured Proxy Target:', backendServiceUrl);
-            if (target && typeof target.href === 'string') {
-                console.error('Actual Target URL for this request (from HPM):', target.href);
-            } else if (target) {
-                console.error('Actual Target URL for this request (from HPM):', target);
-            } else {
-                console.error('Actual Target URL for this request (from HPM): Not available');
-            }
-            console.error('Error Message:', err.message);
-            console.error('Error Code:', err.code);
-            console.error('Error Stack:', err.stack);
-            process.stderr.write(`Explicit STDERR Proxy Error Log: Message - ${err.message}, Code - ${err.code}\n`);
-
-            if (res.headersSent) {
-                console.error('Headers were already sent. Cannot send JSON error response. Ending response if possible.');
-                if (!res.writableEnded) {
-                    res.end();
-                }
-                return;
-            }
+            console.error(`--- PROXY ERROR HANDLER (for ${route}) ---`);
+            process.stderr.write(`--- PROXY ERROR HANDLER (for ${route}) (stderr) ---\n`);
+            // ... (similar onError structure)
+            if (res.headersSent) { res.end(); return; }
             res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({
-                message: 'Proxying failed. See server logs for more details.',
-                error: err.message,
-                code: err.code
-            }));
-        },
-        onProxyRes: (proxyRes, req, res) => {
-            console.log(`[HPM Event - onProxyRes] Received response from target for: ${req.originalUrl}`);
-            console.log(`[HPM Event - onProxyRes] Target response status: ${proxyRes.statusCode}`);
-            // console.log(`[HPM Event - onProxyRes] Target response headers:`, JSON.stringify(proxyRes.headers, null, 2));
+            res.end(JSON.stringify({ message: `Proxy error for ${route}`, error: err.message, code: err.code }));
         }
     };
-
-    app.use(route, createProxyMiddleware(proxyOptions));
-    console.log(`[PROXY SETUP] Proxy for route "${route}" to "${backendServiceUrl}" with enhanced logging is active.`);
+    app.use(route, createProxyMiddleware(일반ProxyOptions));
+    console.log(`[PROXY SETUP] Proxy for route "${route}" to "${backendServiceUrl}" is active.`);
 });
 
 // Serve static files from the 'dist' folder (Vite's build output)
@@ -171,7 +147,7 @@ app.use((err, req, res, next) => {
 app.listen(port, '0.0.0.0', () => {
     console.log(`Frontend server is live on http://0.0.0.0:${port}`);
     console.log('Proxying API requests:');
-    apiRoutes.forEach(route => {
+    나머지ApiRoutes.forEach(route => {
         console.log(`  ${route} -> ${backendServiceUrl}${route}`);
     });
     console.log(`Serving static files from ${path.join(__dirname, 'dist')}`);
