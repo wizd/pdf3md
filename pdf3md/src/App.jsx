@@ -275,6 +275,7 @@ function App() {
       fileKey = 'document';
     }
 
+    console.log(`try convert by posting to ${getBackendUrl()}${endpoint}`);
     try {
       const response = await fetch(`${getBackendUrl()}${endpoint}`, {
         method: 'POST',
