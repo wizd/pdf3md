@@ -21,8 +21,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    networks:
-      - dokploy-network
 
   frontend:
     build:
@@ -46,9 +44,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    networks:
-      - dokploy-network
-
-networks:
-  dokploy-network:
-    external: true
