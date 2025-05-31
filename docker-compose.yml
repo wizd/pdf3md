@@ -13,7 +13,7 @@ services:
       - FLASK_ENV=production
       - TZ=America/Chicago
     volumes:
-      - ../files/pdf3md/temp:/app/temp
+      - ./files/pdf3md/temp:/app/temp
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:6201/"]
