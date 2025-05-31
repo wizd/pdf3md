@@ -5,10 +5,11 @@ services:
       dockerfile: Dockerfile.backend
     container_name: pdf3md-backend
     ports:
-      - "6201:6201"
+      - "${BACKEND_PORT:-6201}:${BACKEND_PORT:-6201}"
     expose:
-      - "6201"
+      - "${BACKEND_PORT:-6201}"
     environment:
+      - BACKEND_PORT=${BACKEND_PORT:-6201}
       - PYTHONUNBUFFERED=1
       - FLASK_ENV=production
       - TZ=America/Chicago
