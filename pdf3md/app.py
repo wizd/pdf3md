@@ -27,7 +27,7 @@ allowed_origins = [
     "http://127.0.0.1:3000",
     "http://localhost:6202",
     "http://127.0.0.1:6202",
-    "https://pdf.vcorp.ai"
+    "https://pdf3.cohook.com"
 ]
 
 # Add custom origins from environment variable
