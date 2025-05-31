@@ -139,7 +139,7 @@ function App() {
   // Helper function to get the backend URL
   const getBackendUrl = () => {
     // All API requests will now be relative, handled by Vite dev proxy or production Express proxy.
-    return 'https://pdfapi.vcorp.ai'; 
+    return 'https://pdf3api.cohook.com'; 
   };
 
   const pollProgress = async (conversionId, fileName) => {
