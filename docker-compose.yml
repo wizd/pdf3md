@@ -17,8 +17,10 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    networks:
-      - pdf3md-network
+    labels:
+      - traefik.enable=true
+      - "traefik.http.routers.pdf3md-backend.rule=Host(`pdf3api.cohook.com`) && PathPrefix(`/`)"
+      - "traefik.http.routers.pdf3md-backend.entryPoints=http"
 
   frontend:
     image: docker.io/learnedmachine/pdf3md-frontend:latest 
@@ -35,9 +37,4 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    networks:
-      - pdf3md-network
 
-networks:
-  default:
-    name: pdf3md-network
