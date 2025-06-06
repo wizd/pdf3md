@@ -97,8 +97,6 @@ This method uses pre-built Docker images from Docker Hub for quick setup. You'll
     This will pull the latest images from Docker Hub and start the application.
     -   Access Frontend: `http://localhost:3000`
     -   Access Backend API: `http://localhost:6201`
-    
-
 
 3.  **Start in Development Mode** (with hot-reloading):
     ```bash
@@ -109,13 +107,12 @@ This method uses pre-built Docker images from Docker Hub for quick setup. You'll
     -   Access Backend API: `http://localhost:6201`
     
 
-
 4.  **Other Useful Script Commands**:
     ```bash
     ./docker-start.sh stop                  # Stop all services
     ./docker-start.sh status                # Check running services
     ./docker-start.sh logs                  # View logs from services
-    ./docker-start.sh rebuild dev           # Rebuild development 
+    ./docker-start.sh rebuild dev example.com  # Rebuild development with custom domain
     ./docker-start.sh help                  # Display all available script commands
     ```
 
@@ -123,10 +120,10 @@ This method uses pre-built Docker images from Docker Hub for quick setup. You'll
 
 If you prefer to use Docker Compose commands directly with the pre-built images without the `docker-start.sh` script:
 
-#### Production Deployment
+#### Direct Deployment
 
 1.  **Create `docker-compose.yml`**:
-    *   Create a directory for your application (e.g., `mkdir pdf3md-prod && cd pdf3md-prod`).
+    *   Create a directory for your application (e.g., `mkdir pdf3md && cd pdf3md`).
     *   Create a file named `docker-compose.yml` in this directory and paste the content provided in the section above (under "Using Pre-built Docker Images (Recommended)").
 
 2.  **Pull and Start Services**:
@@ -135,9 +132,10 @@ If you prefer to use Docker Compose commands directly with the pre-built images 
     docker compose pull # Pulls the latest images specified in docker-compose.yml
     docker compose up -d
     ```
-    
+
 3.  **Access Application**: 
-    - Frontend at `http://localhost:3000`, Backend API at `http://localhost:6201`
+    - With default settings: Frontend at `http://localhost:3000`, Backend API at `http://localhost:6201`
+    - With custom domain: Frontend at `http://example.com:3000`, Backend API at `http://example.com:6201`
 4.  **Stop Services**:
     ```bash
     docker compose down
@@ -156,10 +154,10 @@ This setup is for developing the application locally, not using pre-built images
     Use the `docker-compose.dev.yml` file, which is typically configured to build images locally and mount source code.
     ```bash
     docker compose -f docker-compose.dev.yml up --build
-    ```
-    
+    ``` 
 3.  **Access Application**: 
-    - Frontend (Vite) at `http://localhost:5173`, Backend API at `http://localhost:6201`
+    - With default settings: Frontend (Vite) at `http://localhost:5173`, Backend API at `http://localhost:6201`
+    - With custom domain/IP: Frontend at `http://192.168.1.100:5173`, Backend API at `http://192.168.1.100:6201`
 4.  **Stop Services**:
     ```bash
     docker compose -f docker-compose.dev.yml down
@@ -223,6 +221,46 @@ The application is designed with the following network assumptions when using th
 *   **Same Host Access:** When running via Docker Compose, both the frontend (port `3000`) and backend (port `6201`) are expected to be accessed from the same host machine (e.g., `http://localhost:3000` for the frontend, which will then try to reach `http://localhost:6201` for the backend).
 *   **Local Area Network (LAN) Access:** If you access the frontend from another device on your LAN (e.g., `http://<host-ip-address>:3000`), the frontend will attempt to connect to the backend at `http://<host-ip-address>:6201`. This requires the host machine's firewall to allow incoming connections on port `6201` from other devices on the LAN.
 *   **Limitations:** This setup assumes the backend API is always reachable on the same hostname as the frontend, but on port `6201`. For more complex deployment scenarios (e.g., different domains/subdomains for frontend and backend, or API gateways), further configuration, potentially involving environment variables for the API base URL in the frontend build, would be necessary. The current Docker setup is primarily optimized for local development and straightforward LAN access.
+
+### Using a Reverse Proxy
+
+If you plan to put PDF3MD behind a reverse proxy (e.g., Nginx, Apache, Caddy, Traefik), you need to ensure that requests to your chosen domain are correctly routed to the frontend and backend services.
+
+The frontend application is designed to detect if it's being accessed via a domain name. If so, it will make API requests to the `/api` path on that same domain. Your reverse proxy must be configured to route these `/api/...` requests to the backend service (running on port `6201` by default).
+
+**Example Nginx Configuration:**
+
+Assuming your reverse proxy listens on `http://pdf3md.local/` (or your chosen domain):
+
+1.  **Route `/` to the frontend service** (running on port `3000` by default).
+2.  **Route `/api/` to the backend service** (running on port `6201` by default).
+
+Here's a sample Nginx `location` block for routing the API:
+
+```nginx
+location /api/ {
+    proxy_pass http://<BACKEND_IP_OR_HOSTNAME>:6201/; # Replace with your backend's actual IP/hostname if not localhost from proxy's perspective
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # Important: Ensure trailing slashes are correct.
+    # If proxy_pass has a URI (like / at the end), the part of the original request
+    # that matches the location block is replaced by this URI.
+    # If proxy_pass has no URI, the full original request URI is passed.
+}
+```
+
+**Key considerations for your reverse proxy setup:**
+
+*   **Frontend Root:** Your reverse proxy should serve the frontend application (from port `3000`) at the root of your domain (e.g., `http://pdf3md.local/`).
+*   **API Path:** The frontend will make requests to `http://pdf3md.local/api/...`. Your proxy needs to strip `/api` from the path before forwarding to the backend if the backend doesn't expect `/api` in its routes (which is the case for PDF3MD by default). The `proxy_pass http://<backend_host>:6201/;` (with a trailing slash) typically handles this correctly in Nginx.
+*   **WebSocket Support:** Not currently used by PDF3MD, but if future features require WebSockets, ensure your proxy is configured to handle them.
+*   **SSL/TLS Termination:** It's highly recommended to configure SSL/TLS termination at your reverse proxy.
+*   **CORS:** The backend is configured with permissive CORS headers (`Access-Control-Allow-Origin: *`). In most reverse proxy setups where the frontend and API are served under the same domain, CORS issues should not arise. However, if you encounter them, ensure your proxy isn't stripping or altering necessary CORS headers.
+
+Adjust the `proxy_pass` directive to point to the correct address of your backend container as seen by the reverse proxy (e.g., `http://localhost:6201` if on the same machine, or `http://pdf3md-backend:6201` if using Docker service names in a shared Docker network).
 
 ## Troubleshooting
 

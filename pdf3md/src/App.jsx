@@ -138,8 +138,21 @@ function App() {
 
   // Helper function to get the backend URL
   const getBackendUrl = () => {
-    // All API requests will now be relative, handled by Vite dev proxy or production Express proxy.
-    return 'https://pdf3api.cohook.com'; 
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+
+    if (hostname === 'localhost') {
+      // Scenario 1: Localhost development (e.g., http://localhost:3000)
+      return 'http://localhost:6201';
+    } else if (hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+      // Scenario 2: Direct IP access (e.g., http://192.168.X.Y:3000)
+      // Backend is on the same IP, but port 6201
+      return `${protocol}//${hostname}:6201`;
+    } else {
+      // Scenario 3: Domain name access (e.g., http://pdf2md.local/)
+      // Assumes reverse proxy routes /api to the backend on port 6201
+      return `${protocol}//${hostname}/api`;
+    }
   };
 
   const pollProgress = async (conversionId, fileName) => {

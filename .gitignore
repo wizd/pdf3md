@@ -33,6 +33,7 @@ dist-ssr
 # Docker
 .docker/
 docker-compose.override.yml
+docker-compose.local.yml
 
 # Python
 __pycache__/
