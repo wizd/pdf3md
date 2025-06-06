@@ -17,6 +17,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - pdf3md-network
 
   frontend:
     image: docker.io/learnedmachine/pdf3md-frontend:latest 
@@ -33,6 +35,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - pdf3md-network
 
 networks:
   default:
