@@ -27,7 +27,7 @@ allowed_origins = [
     "http://127.0.0.1:3000",
     "http://localhost:6202",
     "http://127.0.0.1:6202",
-    "https://pdf3.cohook.com"
+    "https://pdf3.cohook.com"  # Added your production frontend URL
 ]
 
 # Add custom origins from environment variable
@@ -179,16 +179,16 @@ def convert():
         # Proactively clean up any orphaned temp_*.pdf files
         # Assumes temp files are in the same directory as app.py
         # The current working directory for app.py when run via Docker is /app/pdf3md
-        # but when run locally for dev, it's where app.py is.
+        # but when run locally for dev, it\'s where app.py is.
         # os.abspath('.') will give the correct directory in both cases if app.py is the entrypoint.
-        current_dir = os.path.abspath(os.path.dirname(__file__)) # More robust way to get script's dir
+        current_dir = os.path.abspath(os.path.dirname(__file__)) # More robust way to get script\'s dir
         logger.info(f"Checking for orphaned temp files in: {current_dir}")
         cleaned_count = 0
         for filename in os.listdir(current_dir):
             if filename.startswith('temp_') and filename.endswith('.pdf'):
-                # Further check if it's an orphaned file (not in current conversion_progress)
+                # Further check if it\'s an orphaned file (not in current conversion_progress)
                 # This check is a bit tricky because conversion_id is generated *after* this cleanup.
-                # For simplicity, we'll clean up any file matching the pattern.
+                # For simplicity, we\'ll clean up any file matching the pattern.
                 # A more sophisticated check might involve checking if the conversion_id part of the filename
                 # corresponds to an active or very recent conversion.
                 # However, given the problem is orphaned files, a broad cleanup is likely fine.
